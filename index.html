@@ -51,6 +51,11 @@
   .brand .mark{width:26px;height:26px;border-radius:8px;background:rgba(0,194,174,.14);
     display:flex;align-items:center;justify-content:center;color:var(--teal)}
   .brand .mark .ic{width:16px;height:16px;stroke-width:2}
+  .mark img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
+  .hico img{width:100%;height:100%;object-fit:cover;border-radius:9px;display:block}
+  .logoprev{width:64px;height:64px;border-radius:16px;background:var(--tint);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;color:var(--wave);overflow:hidden;flex:none}
+  .logoprev img{width:100%;height:100%;object-fit:cover}
   .iconbtn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);color:#CFE2E6;
     border-radius:11px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
     transition:transform .12s var(--ease),background .12s}
@@ -353,7 +358,7 @@
 <div class="wrap">
   <header>
     <div class="toprow">
-      <div class="brand"><span class="mark"><svg class="ic"><use href="#i-anchor"/></svg></span><span id="boatTitle">Boat Log</span></div>
+      <div class="brand"><span class="mark" id="brandMark"><svg class="ic"><use href="#i-anchor"/></svg></span><span id="boatTitle">Boat Log</span></div>
       <button class="iconbtn" id="gearBtn" aria-label="Boat setup"><svg class="ic"><use href="#i-gear"/></svg></button>
     </div>
     <div class="hello">
@@ -557,10 +562,20 @@ async function shrink(file){
   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   URL.revokeObjectURL(url);
   return new Promise(res=>c.toBlob(b=>res(b||file),'image/jpeg',.74))}
-function pickPhoto(cb){const inp=document.createElement('input');
-  inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+async function shrinkSq(file,px=512){
+  const url=URL.createObjectURL(file);
+  const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+  const s=Math.min(img.naturalWidth,img.naturalHeight);
+  const sx=(img.naturalWidth-s)/2, sy=(img.naturalHeight-s)/2;
+  const c=document.createElement('canvas');c.width=c.height=Math.max(1,Math.min(px,s));
+  c.getContext('2d').drawImage(img,sx,sy,s,s,0,0,c.width,c.height);
+  URL.revokeObjectURL(url);
+  return new Promise(res=>c.toBlob(b=>res(b||file),'image/jpeg',.82))}
+function pickPhoto(cb,opts){const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';
+  if(!(opts&&opts.square))inp.setAttribute('capture','environment');
   inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
-    try{const blob=await shrink(f);const id='ph_'+uid();await PB.put(id,blob);cb(id)}
+    try{const blob=await (opts&&opts.square?shrinkSq(f):shrink(f));const id='ph_'+uid();await PB.put(id,blob);cb(id)}
     catch(e){toast('Could not read that photo')}};
   inp.click()}
 async function hydrate(root){
@@ -674,6 +689,10 @@ function header(){ const h=now().getHours();
   $('#hisub').innerHTML=`${now().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}`+
     (S.cfg?`<span class="sep"></span>${esc(S.cfg.name)}`:'');
   $('#boatTitle').textContent='Boat Log';
+  const mk=$('#brandMark');
+  if(S.vessel&&S.vessel.logo){const lg=S.vessel.logo;
+    phURL(lg).then(u=>{if(u&&S.vessel.logo===lg&&!mk.querySelector('img'))mk.innerHTML=`<img src="${u}" alt="ship logo">`})}
+  else if(!mk.querySelector('svg'))mk.innerHTML=I('anchor');
   const R=[['mate','Mate'],['captain','Captain'],['owner','Owner']];
   const rb=$('#roles');rb.innerHTML='';
   R.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;
@@ -955,6 +974,7 @@ function vBoat(m){
   VFIELDS.forEach(([k,l])=>{const r=document.createElement('div');r.className='vrow';
     r.innerHTML=`<span class="vk">${l}</span><span class="vv ${v[k]?'':'vnone'}">${v[k]?esc(v[k]):'—'}</span>`;
     vc.appendChild(r)});
+  if(v.logo)phURL(v.logo).then(u=>{if(u){const h0=vc.querySelector('.hico');if(h0)h0.innerHTML=`<img src="${u}" alt="">`}});
   vc.querySelector('#vedit').onclick=()=>vesselSheet();
   m.appendChild(vc);
 
@@ -1103,9 +1123,31 @@ $('#ov').addEventListener('click',e=>{if(e.target.id==='ov')closeSheet()});
 function vesselSheet(){const v=S.vessel;
   const sh=openSheet(`<h2>Vessel record</h2>
     <p class="sub">The boat’s identity — the stuff you dig for at the worst time. It lives on the tag.</p>
+    <div class="f"><label>Ship’s logo</label>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="logoprev" id="lgprev">${I('boat')}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <button type="button" class="mini line" id="lgup">${I('cam','xs')} Upload image</button>
+          <button type="button" class="mini line" id="lgrm" style="display:${v.logo?'inline-flex':'none'};color:var(--red)">${I('trash','xs')} Remove</button>
+        </div></div></div>
     ${VFIELDS.map(([k,l])=>`<div class="f"><label>${l}</label><input type="text" data-k="${k}" value="${esc(v[k]||'')}"></div>`).join('')}
     <button class="btn teal" id="vs">Save</button>
     <button class="btn ghost" id="vc" style="margin-top:8px">Cancel</button>`);
+  if(v.logo)phURL(v.logo).then(u=>{if(u)sh.querySelector('#lgprev').innerHTML=`<img src="${u}" alt="">`});
+  sh.querySelector('#lgup').onclick=()=>pickPhoto(async id=>{
+    if(v.logo)await PB.del(v.logo);
+    v.logo=id;save();
+    const u=await phURL(id);
+    sh.querySelector('#lgprev').innerHTML=`<img src="${u}" alt="">`;
+    sh.querySelector('#lgrm').style.display='inline-flex';
+    $('#brandMark').innerHTML=`<img src="${u}" alt="ship logo">`;
+    toast('Logo set')},{square:true});
+  sh.querySelector('#lgrm').onclick=async()=>{
+    await PB.del(v.logo);delete v.logo;save();
+    sh.querySelector('#lgprev').innerHTML=I('boat');
+    sh.querySelector('#lgrm').style.display='none';
+    $('#brandMark').innerHTML=I('anchor');
+    toast('Logo removed')};
   sh.querySelector('#vs').onclick=()=>{
     sh.querySelectorAll('input[data-k]').forEach(i=>{v[i.dataset.k]=i.value.trim()});
     save();closeSheet();draw();toast('Vessel record saved')};
