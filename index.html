@@ -3,182 +3,364 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#081821" />
-<title>Boat Log — scan · log hours · check off</title>
+<meta name="theme-color" content="#0B1B24" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Boat Log" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icon-192.png" />
+<title>Boat Log</title>
 <style>
   :root{
     --ink:#0B1B24; --deep:#081821; --panel:#0E2632;
     --teal:#00C2AE; --tealdk:#0A8578; --wave:#2286A9;
-    --amber:#E8A13A; --red:#E05252; --green:#2FA37A;
-    --line:#E2E9EC; --tint:#F2F7F8; --grey:#5F6E76; --white:#fff;
-    --shadow:0 1px 2px rgba(11,27,36,.06),0 4px 14px rgba(11,27,36,.06);
+    --amber:#DE9426; --red:#DE4F4F; --green:#2FA37A;
+    --line:#E4EBEE; --line2:#EEF3F5; --tint:#F3F7F8; --canvas:#EFF4F5;
+    --grey:#5F6E76; --grey2:#8CA0A8; --white:#fff;
+    --shadow:0 1px 2px rgba(11,27,36,.05),0 6px 20px rgba(11,27,36,.06);
+    --shadow2:0 2px 6px rgba(11,27,36,.08),0 14px 40px rgba(11,27,36,.14);
+    --r:18px; --rs:12px;
+    --ease:cubic-bezier(.32,.72,.33,1);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0;background:#EAF0F2;color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
-  button{font-family:inherit}
-  .wrap{max-width:640px;margin:0 auto;min-height:100vh;padding-bottom:84px}
+  html{-webkit-text-size-adjust:100%}
+  html,body{margin:0;padding:0;background:var(--canvas);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  input,textarea,select{font-family:inherit}
+  img{display:block}
+  .wrap{max-width:640px;margin:0 auto;min-height:100vh;padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+  .ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .ic.sm{width:17px;height:17px;stroke-width:2}
+  .ic.xs{width:14px;height:14px;stroke-width:2.2}
 
-  /* header */
-  header{background:linear-gradient(165deg,#0E2C3A 0%,var(--deep) 70%);color:#fff;padding:14px 16px 18px;
-    border-radius:0 0 22px 22px;position:relative;overflow:hidden}
-  header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:26px;
-    background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 24" preserveAspectRatio="none"><path d="M0 14 Q50 4 100 14 T200 14 T300 14 T400 14 V24 H0 Z" fill="%23EAF0F2"/></svg>') repeat-x;
-    background-size:400px 24px;opacity:.98}
+  /* ---------- header ---------- */
+  header{background:
+      radial-gradient(120% 90% at 85% -10%, rgba(0,194,174,.16), transparent 55%),
+      linear-gradient(168deg,#10303F 0%,var(--deep) 72%);
+    color:#fff;padding:calc(12px + env(safe-area-inset-top)) 18px 20px;position:relative;overflow:hidden}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:22px;
+    background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 22" preserveAspectRatio="none"><path d="M0 12 Q50 3 100 12 T200 12 T300 12 T400 12 V22 H0 Z" fill="%23EFF4F5"/></svg>') repeat-x;
+    background-size:400px 22px}
   .toprow{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .brand{font-weight:800;font-size:17px;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
-  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}
-  .gear{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#cfe2e6;
-    border-radius:10px;padding:7px 10px;font-size:14px}
-  .hello{margin-top:12px}
-  .hello .hi{font-size:22px;font-weight:800;letter-spacing:.2px}
-  .hello .sub{font-size:12.5px;color:#8FB0BB;margin-top:3px}
-  .rolebar{display:flex;gap:6px;margin-top:12px;padding-bottom:6px}
-  .rolebar button{background:rgba(255,255,255,.08);color:#cfe2e6;border:1px solid rgba(255,255,255,.14);
-    border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:700}
-  .rolebar button.on{background:var(--teal);color:#03241f;border-color:var(--teal)}
+  .brand{font-weight:700;font-size:15px;letter-spacing:.01em;display:flex;align-items:center;gap:8px;color:#D9E8EB}
+  .brand .mark{width:26px;height:26px;border-radius:8px;background:rgba(0,194,174,.14);
+    display:flex;align-items:center;justify-content:center;color:var(--teal)}
+  .brand .mark .ic{width:16px;height:16px;stroke-width:2}
+  .iconbtn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);color:#CFE2E6;
+    border-radius:11px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+    transition:transform .12s var(--ease),background .12s}
+  .iconbtn:active{transform:scale(.94)}
+  .iconbtn .ic{width:19px;height:19px}
+  .hello{margin-top:16px}
+  .hello .hi{font-size:24px;font-weight:800;letter-spacing:-.015em}
+  .hello .sub{font-size:13px;color:#8FB0BB;margin-top:4px;display:flex;align-items:center;gap:7px}
+  .hello .sub .sep{width:3px;height:3px;border-radius:50%;background:#41626D}
+  .seg{display:flex;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;padding:3px;margin-top:14px;position:relative;z-index:2}
+  .seg button{flex:1;background:none;border:none;border-radius:9px;padding:8px 0;font-size:13px;
+    font-weight:700;color:#9FB8C0;transition:all .16s var(--ease)}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.25)}
 
-  main{padding:14px 12px 8px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+  /* ---------- layout ---------- */
+  main{padding:16px 14px 8px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);
     margin-bottom:14px;overflow:hidden}
-  .card>.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;
-    padding:13px 15px 11px;border-bottom:1px solid var(--line)}
-  .card>.hd h2{margin:0;font-size:14.5px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
-  .card>.hd .tag{font-size:11px;font-weight:800;color:var(--grey);background:var(--tint);
-    border-radius:999px;padding:3px 9px}
-  .card>.hd .tag.warn{background:#FBEEDC;color:#9C6410}
-  .card>.hd .tag.bad{background:#FCE7E7;color:var(--red)}
-  .card>.hd .tag.good{background:#E4F4EE;color:var(--tealdk)}
+  .card>.hd{display:flex;align-items:center;gap:9px;padding:14px 16px 12px;border-bottom:1px solid var(--line2)}
+  .card>.hd .hico{width:32px;height:32px;border-radius:9px;background:var(--tint);color:var(--wave);
+    display:flex;align-items:center;justify-content:center;flex:none}
+  .card>.hd .hico .ic{width:17px;height:17px}
+  .card>.hd .hico.teal{background:#E1F6F2;color:var(--tealdk)}
+  .card>.hd .hico.warn{background:#FBEFDB;color:#9C6410}
+  .card>.hd .hico.bad{background:#FBE5E5;color:var(--red)}
+  .card>.hd h2{margin:0;font-size:15px;font-weight:800;letter-spacing:-.01em;flex:1;min-width:0}
+  .card>.hd .sub2{font-size:11.5px;color:var(--grey2);font-weight:600;margin-top:1px}
+  .pill{font-size:11px;font-weight:800;border-radius:999px;padding:4px 10px;background:var(--tint);
+    color:var(--grey);display:flex;align-items:center;gap:5px;flex:none}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--grey2)}
+  .pill.good{background:#E1F6F2;color:var(--tealdk)} .pill.good .dot{background:var(--teal)}
+  .pill.warn{background:#FBEFDB;color:#9C6410} .pill.warn .dot{background:var(--amber)}
+  .pill.bad{background:#FBE5E5;color:#B43B3B} .pill.bad .dot{background:var(--red)}
+  .pill.info{background:#E9F2F7;color:#1E6E92} .pill.info .dot{background:var(--wave)}
 
-  /* meters */
-  .meters{padding:8px 12px 12px}
-  .mrow{display:flex;align-items:center;gap:10px;padding:9px 4px}
-  .mrow+.mrow{border-top:1px dashed var(--line)}
-  .mico{flex:none;width:38px;height:38px;border-radius:11px;background:var(--tint);display:flex;
-    align-items:center;justify-content:center;font-size:18px}
-  .mname{flex:1;min-width:0}
-  .mname b{font-size:14px}
-  .mlast{font-size:11.5px;color:var(--grey)}
-  .mrow input{width:96px;font-size:19px;font-weight:800;text-align:right;color:var(--ink);
-    border:none;border-bottom:2px solid var(--line);padding:3px 2px;outline:none;background:transparent}
-  .mrow input:focus{border-bottom-color:var(--teal)}
-  .mrow .delta{font-size:11px;font-weight:800;color:var(--tealdk);width:52px;text-align:right}
-  .savebar{display:flex;justify-content:flex-end;padding:4px 12px 12px}
-  .btn{background:var(--ink);color:#fff;border:none;border-radius:11px;padding:11px 18px;
-    font-size:14px;font-weight:800}
-  .btn.teal{background:var(--teal);color:#03241f}
+  .btn{background:var(--ink);color:#fff;border:none;border-radius:var(--rs);padding:12px 18px;
+    font-size:14px;font-weight:800;display:inline-flex;align-items:center;gap:7px;justify-content:center;
+    transition:transform .12s var(--ease),opacity .12s}
+  .btn:active{transform:scale(.97)}
+  .btn.teal{background:var(--teal);color:#04261F}
   .btn.ghost{background:var(--tint);color:var(--ink);border:1px solid var(--line);font-weight:700}
-  .merr{font-size:12px;color:var(--red);padding:0 16px 10px;display:none}
+  .btn.slim{padding:9px 14px;font-size:13px;border-radius:10px}
+  .mini{background:var(--tint);border:1px solid var(--line);border-radius:10px;padding:8px 12px;
+    font-size:12.5px;font-weight:800;color:var(--ink);display:inline-flex;align-items:center;gap:6px;
+    transition:transform .12s var(--ease)}
+  .mini:active{transform:scale(.96)}
+  .mini.go{background:var(--teal);border-color:var(--teal);color:#04261F}
+  .mini.line{background:#fff}
+  .ibtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#fff;
+    color:var(--grey);display:inline-flex;align-items:center;justify-content:center;flex:none;
+    transition:all .14s var(--ease)}
+  .ibtn:active{transform:scale(.92)}
+  .ibtn.armed{background:var(--red);border-color:var(--red);color:#fff}
+  .ibtn .ic{width:15px;height:15px;stroke-width:2}
 
-  /* due section */
-  .due .task{border-left:4px solid transparent}
+  /* ---------- tasks ---------- */
+  .grp{border-bottom:1px solid var(--line2)} .grp:last-child{border-bottom:none}
+  .grp>.ghd{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#FBFDFD;cursor:pointer;user-select:none}
+  .grp>.ghd h3{margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--wave);flex:1;font-weight:800}
+  .gcount{font-size:11px;font-weight:800;color:var(--grey2);font-variant-numeric:tabular-nums}
+  .chev{color:#B9C6CC;transition:transform .18s var(--ease)}
+  .chev .ic{width:15px;height:15px}
+  .grp.open .chev{transform:rotate(90deg)}
+  .glist{display:none} .grp.open .glist{display:block}
+  .task{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-top:1px solid var(--line2)}
+  .task:first-child{border-top:none}
+  .cbx{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid #C9D4D9;background:#fff;
+    margin-top:1px;display:flex;align-items:center;justify-content:center;color:#fff;
+    transition:all .18s var(--ease)}
+  .cbx .ic{width:15px;height:15px;stroke-width:2.6;opacity:0;transform:scale(.4);transition:all .18s var(--ease)}
+  .task.done .cbx{background:var(--green);border-color:var(--green)}
+  .task.done .cbx .ic{opacity:1;transform:scale(1)}
+  .task.done .lbl{color:#9AA7AD;text-decoration:line-through;text-decoration-color:#C6D0D4}
+  .tbody{flex:1;min-width:0}
+  .lbl{font-size:14.5px;font-weight:650;line-height:1.35;letter-spacing:-.005em}
+  .meta{margin-top:5px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .chip{font-size:10px;font-weight:800;letter-spacing:.02em;padding:2.5px 8px;border-radius:999px;
+    background:var(--tint);color:var(--grey)}
+  .chip.eq{background:#E9F1F4;color:var(--wave)}
+  .chip.salt{background:#E1F6F2;color:var(--tealdk)}
+  .chip.gas{background:#FBE5E5;color:#B43B3B}
+  .chip.man{background:#EFE9FA;color:#6A4FB8}
+  .chip.trip{background:#E1F6F2;color:var(--tealdk)}
+  .chip.note2{background:#FBEFDB;color:#9C6410}
+  .note{font-size:11.5px;color:var(--grey);margin-top:4px;line-height:1.4}
+  .st{font-size:12.5px;font-weight:800;margin-top:5px;display:flex;align-items:center;gap:5px}
+  .st .ic{width:13px;height:13px;stroke-width:2.4}
+  .st.ok{color:var(--green)} .st.soon{color:var(--amber)} .st.bad{color:var(--red)} .st.base{color:var(--wave)}
+  .pbar{height:5px;background:var(--tint);border-radius:99px;overflow:hidden;margin-top:8px}
+  .pbar i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .3s var(--ease)}
+  .pbar i.warn{background:var(--amber)} .pbar i.bad{background:var(--red)}
+  .actrow{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .due .task{border-left:3px solid transparent}
   .due .task.overdue{border-left-color:var(--red)}
   .due .task.soon{border-left-color:var(--amber)}
 
-  /* tasks */
-  .grp{border-bottom:1px solid var(--line)}
-  .grp:last-child{border-bottom:none}
-  .grp>.ghd{display:flex;align-items:center;gap:8px;padding:11px 15px;background:#FBFDFD;cursor:pointer}
-  .grp>.ghd h3{margin:0;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--wave);flex:1}
-  .gcount{font-size:11px;font-weight:800;color:var(--grey)}
-  .chev{color:#B9C6CC;font-size:12px;transition:.15s}
-  .grp.open .chev{transform:rotate(90deg)}
-  .glist{display:none}
-  .grp.open .glist{display:block}
-  .task{display:flex;align-items:flex-start;gap:12px;padding:12px 15px;border-top:1px solid var(--line)}
-  .cbx{flex:none;width:27px;height:27px;border-radius:9px;border:2px solid #C4D0D6;background:#fff;
-    margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;transition:.15s}
-  .task.done .cbx{background:var(--green);border-color:var(--green)}
-  .task.done .lbl{color:#9AA7AD;text-decoration:line-through}
-  .tbody{flex:1;min-width:0}
-  .lbl{font-size:14.5px;font-weight:650;line-height:1.3}
-  .meta{margin-top:4px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-  .chip{font-size:10px;font-weight:800;letter-spacing:.02em;padding:2px 7px;border-radius:999px;
-    background:var(--tint);color:var(--grey)}
-  .chip.eq{background:#E9F1F4;color:var(--wave)}
-  .chip.salt{background:#E4F6F2;color:var(--tealdk)}
-  .chip.gas{background:#FDECEC;color:var(--red)}
-  .note{font-size:11.5px;color:var(--grey);margin-top:3px;line-height:1.35}
-  .st{font-size:12px;font-weight:800;margin-top:4px}
-  .st.ok{color:var(--green)} .st.soon{color:#B0122A00} .st.soon{color:var(--amber)} .st.bad{color:var(--red)} .st.base{color:var(--wave)}
-  .pbar{height:5px;background:var(--tint);border-radius:99px;overflow:hidden;margin-top:7px}
-  .pbar i{display:block;height:100%;background:var(--teal)}
-  .pbar i.warn{background:var(--amber)} .pbar i.bad{background:var(--red)}
-  .actrow{margin-top:9px;display:flex;gap:8px}
-  .mini{background:var(--tint);border:1px solid var(--line);border-radius:9px;padding:7px 11px;
-    font-size:12px;font-weight:800;color:var(--ink)}
-  .mini.go{background:var(--teal);border-color:var(--teal);color:#03241f}
+  /* inline forms */
+  .inline{margin-top:10px;background:var(--tint);border:1px solid var(--line);border-radius:12px;
+    padding:11px;display:none}
+  .inline.show{display:block}
+  .inline .frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .inline label{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--wave);font-weight:800;display:block;margin-bottom:4px}
+  .inline input{background:#fff;border:1.5px solid var(--line);border-radius:9px;padding:9px 10px;
+    font-size:15px;outline:none;min-width:0}
+  .inline input:focus{border-color:var(--teal)}
+  .inline .fnote{font-size:11px;color:var(--grey);margin-top:7px;line-height:1.4}
 
-  /* ready banner */
-  .ready{background:linear-gradient(135deg,#0F7D68,#0A8578);color:#fff;border-radius:16px;
-    padding:16px;display:none;align-items:center;gap:12px;margin-bottom:14px;box-shadow:var(--shadow)}
+  /* history rows */
+  .hist{border-top:1px solid var(--line2);background:#FBFDFD;padding:4px 16px 10px;display:none}
+  .hist.show{display:block}
+  .hrow{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+  .hrow:last-child{border-bottom:none}
+  .hrow .hh{font-weight:800;font-variant-numeric:tabular-nums;min-width:64px}
+  .hrow .hd2{color:var(--grey);flex:1}
+  .hthumb{width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--line)}
+
+  /* ---------- meters (Today) ---------- */
+  .meters{padding:6px 12px 10px}
+  .mrow{display:flex;align-items:center;gap:11px;padding:10px 4px}
+  .mrow+.mrow{border-top:1px dashed var(--line)}
+  .mico{flex:none;width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--wave);
+    display:flex;align-items:center;justify-content:center}
+  .mico .ic{width:19px;height:19px}
+  .mname{flex:1;min-width:0}
+  .mname b{font-size:14px;letter-spacing:-.005em}
+  .mlast{font-size:11.5px;color:var(--grey2);margin-top:1px}
+  .mrow input{width:92px;font-size:20px;font-weight:800;text-align:right;color:var(--ink);
+    border:none;border-bottom:2px solid var(--line);padding:3px 2px;outline:none;background:transparent;
+    font-variant-numeric:tabular-nums}
+  .mrow input:focus{border-bottom-color:var(--teal)}
+  .mrow .delta{font-size:11px;font-weight:800;color:var(--tealdk);width:48px;text-align:right}
+  .savebar{display:flex;justify-content:flex-end;padding:2px 14px 14px}
+  .merr{font-size:12px;color:var(--red);padding:0 16px 10px;display:none;line-height:1.4}
+
+  .ready{background:linear-gradient(135deg,#0F7D68,#0A8578);color:#fff;border-radius:var(--r);
+    padding:16px;display:none;align-items:center;gap:13px;margin-bottom:14px;box-shadow:var(--shadow)}
   .ready.show{display:flex}
-  .ready .big{font-size:16px;font-weight:800}
-  .ready .sm{font-size:12px;opacity:.85}
+  .ready .rico{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center}
+  .ready .big{font-size:15.5px;font-weight:800}
+  .ready .sm{font-size:12px;opacity:.85;margin-top:2px}
+  .prog{height:6px;background:#DDE7EA;border-radius:99px;overflow:hidden;margin:0 4px 14px}
+  .prog i{display:block;height:100%;background:var(--teal);transition:width .3s var(--ease);border-radius:99px}
+  .hint{font-size:12px;color:var(--grey2);text-align:center;margin:6px 10px 16px;line-height:1.5}
 
-  .prog{height:7px;background:#DDE7EA;border-radius:99px;overflow:hidden;margin:0 4px 12px}
-  .prog i{display:block;height:100%;background:var(--teal);transition:.25s}
-  .hint{font-size:12px;color:var(--grey);text-align:center;margin:8px 6px 14px;line-height:1.45}
+  /* ---------- hours ---------- */
+  .meterhead{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
+  .meterhead .big{font-size:34px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .meterhead .unit{font-size:12px;color:var(--grey2);font-weight:700}
+  .meterhead .upd{margin-left:auto;font-size:11px;color:var(--grey2);text-align:right;line-height:1.35}
+  .linkrow{display:flex;gap:14px;padding:2px 16px 12px}
+  .linkbtn{background:none;border:none;padding:0;font-size:12px;font-weight:800;color:var(--wave);
+    display:inline-flex;align-items:center;gap:5px}
+  .linkbtn .ic{width:13px;height:13px;stroke-width:2.3}
 
-  /* hours view */
-  .meterhead{display:flex;align-items:baseline;gap:10px;padding:14px 15px 4px}
-  .meterhead .big{font-size:30px;font-weight:800}
-  .meterhead .unit{font-size:12px;color:var(--grey);font-weight:700}
-  .meterhead .upd{margin-left:auto;font-size:11px;color:var(--grey)}
+  /* ---------- boat tab ---------- */
+  .vrow{display:flex;gap:10px;padding:11px 16px;border-top:1px solid var(--line2);font-size:13.5px;align-items:flex-start}
+  .vrow:first-of-type{border-top:none}
+  .vrow .vk{flex:none;width:118px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--grey2);font-weight:800;padding-top:2.5px;line-height:1.5}
+  .vrow .vv{flex:1;font-weight:650;min-width:0;overflow-wrap:break-word;line-height:1.5}
+  .vrow .vv.vnone{color:#B9C6CC;font-weight:500}
+  .docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;padding:12px 16px 14px}
+  .doc{position:relative;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--tint)}
+  .doc img{width:100%;height:86px;object-fit:cover}
+  .doc .dl{font-size:10.5px;font-weight:800;padding:6px 8px;color:var(--ink);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;background:#fff}
+  .doc .dx{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:8px;border:none;
+    background:rgba(8,24,33,.55);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+  .doc .dx.armed{background:var(--red)}
+  .doc .dx .ic{width:12px;height:12px;stroke-width:2.4}
+  .addtile{border:1.5px dashed #C4D2D8;border-radius:13px;min-height:112px;background:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--wave);
+    font-size:11px;font-weight:800}
 
-  /* schedule */
-  .duedate{font-size:12px;font-weight:800}
-  .duedate.ok{color:var(--green)} .duedate.soon{color:var(--amber)} .duedate.bad{color:var(--red)} .duedate.base{color:var(--wave)}
+  .srow{display:flex;align-items:center;gap:10px;padding:11px 16px;border-top:1px solid var(--line2)}
+  .srow:first-child{border-top:none}
+  .srow.low{background:#FDF8EE}
+  .sbody{flex:1;min-width:0}
+  .sname{font-size:14px;font-weight:700;letter-spacing:-.005em}
+  .ssub{font-size:11.5px;color:var(--grey);margin-top:2px}
+  .qty{display:flex;align-items:center;gap:2px;background:var(--tint);border:1px solid var(--line);
+    border-radius:11px;padding:2px}
+  .qty button{width:30px;height:30px;border:none;background:none;font-size:17px;font-weight:800;color:var(--wave);border-radius:8px}
+  .qty button:active{background:#E4EDF0}
+  .qty .qn{min-width:26px;text-align:center;font-size:14.5px;font-weight:800;font-variant-numeric:tabular-nums}
+  .parchip{font-size:10px;font-weight:800;color:var(--grey2);margin-top:2px;text-align:center}
+  .shoprow{display:flex;align-items:center;gap:9px;padding:9px 16px;border-top:1px solid #F3E9D4;font-size:13.5px}
+  .shoprow b{font-variant-numeric:tabular-nums}
+  .quickchips{display:flex;flex-wrap:wrap;gap:7px;padding:2px 16px 14px}
+  .qc{background:var(--tint);border:1px solid var(--line);border-radius:999px;padding:7px 12px;
+    font-size:12px;font-weight:700;color:var(--ink)}
 
-  /* log */
-  .logday{padding:10px 15px 4px;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--wave);font-weight:800}
-  .logrow{display:flex;gap:10px;padding:10px 15px;border-top:1px solid var(--line);font-size:13px}
-  .logrow .t{color:var(--grey);flex:none;width:52px;font-variant-numeric:tabular-nums}
-  .logrow b{font-weight:700}
-  .logrow .who{margin-left:auto;color:var(--grey);font-size:11px}
+  /* ---------- log ---------- */
+  .composer{padding:12px 14px 14px}
+  .composer textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;
+    font-size:15px;min-height:64px;resize:vertical;outline:none;line-height:1.4}
+  .composer textarea:focus{border-color:var(--teal)}
+  .composer .crow{display:flex;gap:8px;margin-top:9px;align-items:center;flex-wrap:wrap}
+  .composer input[type=text]{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;
+    font-size:14px;outline:none;min-width:130px}
+  .composer input[type=text]:focus{border-color:var(--teal)}
+  .segsm{display:flex;background:var(--tint);border:1px solid var(--line);border-radius:11px;padding:2.5px}
+  .segsm button{border:none;background:none;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:800;color:var(--grey)}
+  .segsm button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(11,27,36,.12)}
+  .attach{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .attach .athumb{position:relative}
+  .attach img{width:52px;height:52px;border-radius:10px;object-fit:cover;border:1px solid var(--line)}
+  .attach .ax{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;
+    background:var(--ink);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+  .logday{padding:12px 16px 4px;font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--wave);font-weight:800}
+  .logrow{display:flex;gap:10px;padding:11px 16px;border-top:1px solid var(--line2);font-size:13.5px;align-items:flex-start}
+  .logrow .t{color:var(--grey2);flex:none;width:58px;font-variant-numeric:tabular-nums;font-size:11.5px;padding-top:2.5px;white-space:nowrap}
+  .lbody{flex:1;min-width:0}
+  .logrow b{font-weight:700;letter-spacing:-.005em}
+  .lsub{margin-top:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--grey)}
+  .lsub .ic{width:12px;height:12px;stroke-width:2.2}
+  .lthumbs{display:flex;gap:6px;margin-top:7px}
+  .lthumbs img{width:58px;height:58px;border-radius:10px;object-fit:cover;border:1px solid var(--line)}
 
-  /* bottom nav */
-  nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);
-    border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
-  nav button{flex:1;background:none;border:none;padding:9px 0 8px;font-size:10.5px;font-weight:800;
-    color:#93A3AA;display:flex;flex-direction:column;align-items:center;gap:3px}
-  nav button .i{font-size:19px;line-height:1}
-  nav button.on{color:var(--tealdk)}
-  nav button .bub{position:absolute;transform:translate(16px,-4px);background:var(--red);color:#fff;
-    font-size:10px;font-weight:800;border-radius:99px;min-width:16px;padding:1px 4px}
+  /* ---------- nav ---------- */
+  nav{position:fixed;bottom:0;left:0;right:0;background:rgba(252,254,254,.965);backdrop-filter:blur(14px) saturate(1.6);
+    -webkit-backdrop-filter:blur(14px) saturate(1.6);border-top:1px solid rgba(11,27,36,.07);display:flex;z-index:30;
+    padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;background:none;border:none;padding:8px 0 7px;font-size:10px;font-weight:700;
+    color:#93A3AA;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;
+    transition:color .15s;letter-spacing:.01em}
+  nav button.on{color:var(--tealdk);font-weight:800}
+  nav button .bub{position:absolute;top:3px;left:calc(50% + 7px);background:var(--red);color:#fff;
+    font-size:9.5px;font-weight:800;border-radius:99px;min-width:16px;height:16px;padding:0 4px;
+    display:flex;align-items:center;justify-content:center;border:2px solid #fff}
 
-  /* setup overlay */
-  .ov{position:fixed;inset:0;background:rgba(8,24,33,.55);z-index:50;display:none;align-items:flex-end;justify-content:center}
+  /* ---------- overlays ---------- */
+  .ov{position:fixed;inset:0;background:rgba(8,24,33,.5);z-index:50;display:none;align-items:flex-end;
+    justify-content:center;backdrop-filter:blur(2px)}
   .ov.show{display:flex}
-  .sheet{background:#fff;width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:20px 18px 26px;
-    max-height:88vh;overflow:auto}
-  .sheet h2{margin:0 0 4px;font-size:19px}
-  .sheet .sub{font-size:13px;color:var(--grey);margin-bottom:16px}
+  .sheet{background:#fff;width:100%;max-width:640px;border-radius:24px 24px 0 0;padding:10px 18px calc(24px + env(safe-area-inset-bottom));
+    max-height:90vh;overflow:auto;animation:up .28s var(--ease)}
+  @keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+  .handle{width:38px;height:5px;border-radius:99px;background:#D8E1E5;margin:2px auto 14px}
+  .sheet h2{margin:0 0 4px;font-size:19px;letter-spacing:-.01em}
+  .sheet .sub{font-size:13px;color:var(--grey);margin:0 0 16px;line-height:1.45}
   .f{margin-bottom:14px}
-  .f label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--wave);
+  .f label{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--wave);
     font-weight:800;margin-bottom:6px}
-  .f input[type=text]{width:100%;font-size:16px;padding:11px 12px;border:1.5px solid var(--line);
-    border-radius:11px;outline:none}
-  .f input[type=text]:focus{border-color:var(--teal)}
+  .f input[type=text],.f input[type=number],.f input[type=date]{width:100%;font-size:16px;padding:12px;
+    border:1.5px solid var(--line);border-radius:12px;outline:none;background:#fff}
+  .f input:focus{border-color:var(--teal)}
   .segs{display:flex;flex-wrap:wrap;gap:7px}
   .segs button{background:var(--tint);border:1.5px solid var(--line);border-radius:11px;
-    padding:10px 14px;font-size:13.5px;font-weight:700;color:var(--ink)}
-  .segs button.on{background:#E4F6F2;border-color:var(--teal);color:var(--tealdk)}
+    padding:10px 14px;font-size:13.5px;font-weight:700;color:var(--ink);transition:all .13s}
+  .segs button.on{background:#E1F6F2;border-color:var(--teal);color:var(--tealdk);font-weight:800}
   .sheet .btn{width:100%;margin-top:6px;padding:14px;font-size:15px}
+  .lightbox{position:fixed;inset:0;background:rgba(4,12,17,.93);z-index:70;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:14px}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:94vw;max-height:80vh;border-radius:12px;object-fit:contain}
+  .lightbox .lx{position:absolute;top:calc(14px + env(safe-area-inset-top));right:16px}
+  #toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(8px);
+    background:var(--ink);color:#fff;font-size:13px;font-weight:700;border-radius:12px;padding:11px 18px;
+    z-index:80;opacity:0;pointer-events:none;transition:all .22s var(--ease);box-shadow:var(--shadow2);
+    max-width:86vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{padding:26px 18px;text-align:center;color:var(--grey2)}
+  .empty .ic{width:30px;height:30px;margin:0 auto 8px;stroke-width:1.5;color:#B9C6CC}
+  .empty .et{font-size:13px;line-height:1.5}
 </style>
 </head>
 <body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-anchor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.1"/><path d="M12 7.2V21"/><path d="M8.7 10.4h6.6"/><path d="M4.6 14.3a7.4 7.4 0 0 0 14.8 0"/><path d="M4.6 14.3l-1.8-1.2M4.6 14.3l1.5 1.6M19.4 14.3l1.8-1.2M19.4 14.3l-1.5 1.6"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 15.5a8.3 8.3 0 1 1 16 0"/><path d="M12 15.5l4.2-4.8"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><path d="M4.6 19.5h14.8"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.2 2.8L5.6 13.4h4.9L10 21.2l7.6-10.6h-4.9z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.8" y="5" width="16.4" height="15.2" rx="2.6"/><path d="M3.8 9.8h16.4"/><path d="M8.4 2.8v4M15.6 2.8v4"/><path d="M8 13.6h2.4M13.6 13.6H16M8 16.8h2.4M13.6 16.8H16"/></symbol>
+  <symbol id="i-boat" viewBox="0 0 24 24"><path d="M3.4 14.6h17.2l-2.7 4.6H6.1z"/><path d="M6.6 14.6v-3.4h6.8l3.6 3.4"/><path d="M9.9 11.2V7.4L13.4 11"/><path d="M2.6 21.4c1.3-.9 2.7-.9 4 0 1.3.9 2.7.9 4 0 1.3-.9 2.7-.9 4 0 1.3.9 2.7.9 4 0" opacity=".55"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.2C10 4.8 7 4.8 4 6.2v13.2c3-1.4 6-1.4 8 0 2-1.4 5-1.4 8 0V6.2c-3-1.4-6-1.4-8 0z"/><path d="M12 6.2v13.2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M4 7.1h8.1M16.9 7.1H20"/><circle cx="14.5" cy="7.1" r="2.1"/><path d="M4 12h2.6M11.4 12H20"/><circle cx="9" cy="12" r="2.1"/><path d="M4 16.9h9.7M18.5 16.9H20"/><circle cx="16.1" cy="16.9" r="2.1"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><rect x="3.2" y="7" width="17.6" height="13.2" rx="3"/><path d="M8.4 7l1.6-2.6h4L15.6 7"/><circle cx="12" cy="13.2" r="3.6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.8h15"/><path d="M9.5 6.8V5.4A1.4 1.4 0 0 1 10.9 4h2.2a1.4 1.4 0 0 1 1.4 1.4v1.4"/><path d="M6.5 6.8l.9 12.4a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.4"/><path d="M10 10.8v5.4M14 10.8v5.4"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4.2 19.8l.9-3.8L16.7 4.4a2.1 2.1 0 0 1 3 3L8.1 19l-3.9.8z"/><path d="M14.6 6.5l2.9 2.9"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.6l4.4 4.4L19 7.4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.9 6.2a4.6 4.6 0 0 0-6.1 6L4 17a2.1 2.1 0 1 0 3 3l4.8-4.8a4.6 4.6 0 0 0 6-6.1l-2.9 2.9-2.9-1 -1-2.9z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 13.6A8.1 8.1 0 1 1 10.4 4a6.6 6.6 0 0 0 9.6 9.6z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4V12l3.1 2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21.2S5.6 16 5.6 11a6.4 6.4 0 0 1 12.8 0c0 5-6.4 10.2-6.4 10.2z"/><circle cx="12" cy="10.8" r="2.2"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3.6 7.9L12 3.4l8.4 4.5v8.2L12 20.6l-8.4-4.5z"/><path d="M3.6 7.9L12 12.4l8.4-4.5"/><path d="M12 12.4v8.2"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.4 3.4h7.4l4.8 4.8v12.4H6.4z"/><path d="M13.4 3.8v4.8h4.8"/><path d="M9 13h6M9 16.2h6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.6" y="8.6" width="11.4" height="11.4" rx="2.4"/><path d="M5.4 15.4H4A0 0 0 0 1 4 15.4V6a2 2 0 0 1 2-2h9.4a0 0 0 0 1 0 0v1.4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.6v5"/><circle cx="12" cy="16.1" r="1.15" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.2s6.4 6.6 6.4 11a6.4 6.4 0 0 1-12.8 0c0-4.4 6.4-11 6.4-11z"/></symbol>
+  <symbol id="i-hist" viewBox="0 0 24 24"><path d="M4.4 12a7.6 7.6 0 1 1 2.2 5.4"/><path d="M4.4 12H8M4.4 12V8.4"/><path d="M12 8.6V12l2.6 1.7"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9.4" cy="19.4" r="1.5"/><circle cx="17.4" cy="19.4" r="1.5"/><path d="M3.4 4.6h2.4l2.2 10.4a1.6 1.6 0 0 0 1.6 1.3h7.2a1.6 1.6 0 0 0 1.6-1.2l1.8-7H7"/></symbol>
+</svg>
+
 <div class="wrap">
   <header>
     <div class="toprow">
-      <div class="brand"><span class="dot"></span> <span id="boatTitle">Boat Log</span></div>
-      <button class="gear" id="gearBtn">⚙︎</button>
+      <div class="brand"><span class="mark"><svg class="ic"><use href="#i-anchor"/></svg></span><span id="boatTitle">Boat Log</span></div>
+      <button class="iconbtn" id="gearBtn" aria-label="Boat setup"><svg class="ic"><use href="#i-gear"/></svg></button>
     </div>
     <div class="hello">
       <div class="hi" id="hi">Welcome aboard</div>
       <div class="sub" id="hisub"></div>
     </div>
-    <div class="rolebar" id="roles"></div>
+    <div class="seg" id="roles"></div>
   </header>
 
   <main id="main"></main>
@@ -186,17 +368,14 @@
   <nav id="nav"></nav>
 </div>
 
-<div class="ov" id="ov">
-  <div class="sheet" id="sheet"></div>
-</div>
-
+<div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+<div class="lightbox" id="lb"><button class="iconbtn lx" id="lbx"><svg class="ic"><use href="#i-x"/></svg></button><img id="lbimg" alt=""></div>
+<div id="toast"></div>
 <script>
 /* =========================================================
-   TASK SEED v2 — equipment-scoped, meter-bound, researched
-   cad: pre | post | weekly | monthly | cal (calendar interval, months) | rt (runtime) | big
-   meter: 'eng' (instantiated per engine), 'gen', null
-   engType: 'inboard' | 'outboard' | null(any)   gas: gas-engines-only
-   iv: hours interval   calM: calendar backstop months
+   Boat Log v3 — single sticker · whole boat
+   TASK SEED — equipment-scoped, meter-bound, researched
+   cad: pre | post | weekly | monthly | cal | rt | big
    ========================================================= */
 /*TASKS_START*/
 const TASKS=[
@@ -303,40 +482,113 @@ const TASKS=[
 ];
 /*TASKS_END*/
 
-/* ---------- state ---------- */
-const KEY='boatlog.v2';
-let S=load();
-function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
-function save(){localStorage.setItem(KEY,JSON.stringify(S))}
-S.cfg=S.cfg||null;           // {name, engines, engType, gen, ac, trailer, salt}
-S.role=S.role||'mate';
-S.view=S.view||'today';
-S.meters=S.meters||{};       // id -> {h, ts}
-S.done=S.done||{};           // periodic checkoffs
-S.rt=S.rt||{};               // instId -> {h, d}
-S.cal=S.cal||{};             // calId -> ISO date last done
-S.log=S.log||[];             // {ts, txt, meter, h, role}
-
+/* ---------- tiny utils ---------- */
+const $=s=>document.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const now=()=>new Date();
 const todayISO=()=>now().toISOString().slice(0,10);
+const buzz=()=>{try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const I=(n,cls)=>`<svg class="ic${cls?' '+cls:''}"><use href="#i-${n}"/></svg>`;
+function toast(txt){const t=$('#toast');t.textContent=txt;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2300)}
+function fmtD(d,withYear){const dt=(d instanceof Date)?d:new Date(d);
+  const o={month:'short',day:'numeric'};if(withYear||dt.getFullYear()!==now().getFullYear())o.year='numeric';
+  return dt.toLocaleDateString(undefined,o)}
+function fmtT(ts){return new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
+
+/* ---------- state + migration ---------- */
+const KEY='boatlog.v3', OLDKEY='boatlog.v2';
+let S=load();
+function load(){
+  try{const v3=JSON.parse(localStorage.getItem(KEY));if(v3)return v3}catch(e){}
+  try{const v2=JSON.parse(localStorage.getItem(OLDKEY));
+    if(v2&&(v2.cfg||v2.meters||v2.log)){const s=migrate(v2);s._mig=true;return s}}catch(e){}
+  return{}}
+function migrate(o){
+  const s={cfg:o.cfg||null,role:o.role||'mate',view:'today',
+    meters:o.meters||{},done:o.done||{},rt:o.rt||{},cal:o.cal||{},
+    mHist:{},rtHist:{},items:[],vessel:{docs:[]},log:[]};
+  Object.entries(s.meters).forEach(([id,rec])=>{if(rec)s.mHist[id]=[{h:rec.h,ts:rec.ts}]});
+  Object.entries(s.rt).forEach(([inst,rec])=>{if(rec)s.rtHist[inst]=[{id:uid(),h:rec.h,d:rec.d}]});
+  s.log=(o.log||[]).map(e=>({id:uid(),ts:e.ts,type:'auto',txt:e.txt,h:e.h??null,role:e.role||'mate'}));
+  return s}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+S.cfg=S.cfg||null; S.role=S.role||'mate'; S.view=S.view||'today';
+S.meters=S.meters||{}; S.mHist=S.mHist||{}; S.done=S.done||{};
+S.rt=S.rt||{}; S.rtHist=S.rtHist||{}; S.cal=S.cal||{};
+S.log=S.log||[]; S.items=S.items||[]; S.vessel=S.vessel||{docs:[]}; S.vessel.docs=S.vessel.docs||[];
+if(S._mig){delete S._mig;save()}
+
 function weekKey(){const d=now(),y=d.getFullYear(),o=new Date(y,0,1);
   return y+'-W'+Math.ceil(((d-o)/864e5+o.getDay()+1)/7)}
 const monthKey=()=>now().toISOString().slice(0,7);
 const pKey=c=>c==='pre'||c==='post'?todayISO():c==='weekly'?weekKey():c==='monthly'?monthKey():'x';
 const dk=t=>t.id+'@'+pKey(t.cad);
-function logIt(txt,meter,h){S.log.unshift({ts:Date.now(),txt,meter:meter||null,h:h??null,role:S.role});
-  if(S.log.length>400)S.log.length=400;}
+function logIt(txt,h,type){S.log.unshift({id:uid(),ts:Date.now(),type:type||'auto',txt,h:h??null,role:S.role});
+  if(S.log.length>500)S.log.length=500}
 
-/* meters from config */
+/* ---------- photo store (IndexedDB) ---------- */
+const PB={db:null,
+  open(){return this.db?Promise.resolve(this.db):new Promise((res,rej)=>{
+    const r=indexedDB.open('boatlog-ph',1);
+    r.onupgradeneeded=e=>{e.target.result.createObjectStore('p')};
+    r.onsuccess=e=>{this.db=e.target.result;res(this.db)};
+    r.onerror=()=>rej(r.error)})},
+  async put(id,blob){const db=await this.open();return new Promise((res,rej)=>{
+    const t=db.transaction('p','readwrite');t.objectStore('p').put(blob,id);
+    t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})},
+  async get(id){const db=await this.open();return new Promise(res=>{
+    const q=db.transaction('p').objectStore('p').get(id);
+    q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})},
+  async del(id){if(!id)return;const db=await this.open();return new Promise(res=>{
+    const t=db.transaction('p','readwrite');t.objectStore('p').delete(id);
+    t.oncomplete=res;t.onerror=res})}};
+const PURL=new Map();
+async function phURL(id){if(!id)return null;if(PURL.has(id))return PURL.get(id);
+  const b=await PB.get(id);if(!b)return null;
+  const u=URL.createObjectURL(b);PURL.set(id,u);return u}
+async function shrink(file){
+  const url=URL.createObjectURL(file);
+  const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+  const mx=1400,sc=Math.min(1,mx/Math.max(img.naturalWidth,img.naturalHeight));
+  const c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(img.naturalWidth*sc));c.height=Math.max(1,Math.round(img.naturalHeight*sc));
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  URL.revokeObjectURL(url);
+  return new Promise(res=>c.toBlob(b=>res(b||file),'image/jpeg',.74))}
+function pickPhoto(cb){const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+  inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
+    try{const blob=await shrink(f);const id='ph_'+uid();await PB.put(id,blob);cb(id)}
+    catch(e){toast('Could not read that photo')}};
+  inp.click()}
+async function hydrate(root){
+  for(const el of (root||document).querySelectorAll('img[data-ph]')){
+    const u=await phURL(el.dataset.ph);
+    if(u){el.src=u;el.onclick=e=>{e.stopPropagation();openLB(u)}}
+    else el.closest('.athumb,.doc,.lthumbs')?.remove?.()}}
+function openLB(u){$('#lbimg').src=u;$('#lb').classList.add('show')}
+$('#lbx').onclick=()=>$('#lb').classList.remove('show');
+$('#lb').onclick=e=>{if(e.target.id==='lb')$('#lb').classList.remove('show')};
+
+/* ---------- two-tap delete ---------- */
+let ARM=null,ARMT=null;
+function armBtn(btn,fn){btn.addEventListener('click',e=>{e.stopPropagation();
+  if(ARM===btn){clearTimeout(ARMT);btn.classList.remove('armed');ARM=null;buzz();fn()}
+  else{if(ARM)ARM.classList.remove('armed');ARM=btn;btn.classList.add('armed');
+    clearTimeout(ARMT);ARMT=setTimeout(()=>{btn.classList.remove('armed');if(ARM===btn)ARM=null},2600);
+    toast('Tap again to delete')}})}
+
+/* ---------- config-driven model ---------- */
 function meterDefs(){ if(!S.cfg)return[];
-  const m=[];const eng=S.cfg.engines;
-  if(eng===2){m.push({id:'eng1',name:'Port Engine',icon:'⚙️',kind:'eng'});
-              m.push({id:'eng2',name:'Stbd Engine',icon:'⚙️',kind:'eng'});}
-  else m.push({id:'eng1',name:S.cfg.engType==='outboard'?'Outboard':'Main Engine',icon:'⚙️',kind:'eng'});
-  if(S.cfg.gen)m.push({id:'gen',name:'Generator',icon:'🔌',kind:'gen'});
-  return m;}
-
-/* task applicability */
+  const m=[],eng=S.cfg.engines;
+  if(eng===2){m.push({id:'eng1',name:'Port Engine',kind:'eng'});
+              m.push({id:'eng2',name:'Stbd Engine',kind:'eng'});}
+  else m.push({id:'eng1',name:S.cfg.engType==='outboard'?'Outboard':'Main Engine',kind:'eng'});
+  if(S.cfg.gen)m.push({id:'gen',name:'Generator',kind:'gen'});
+  return m}
+const mName=id=>meterDefs().find(x=>x.id===id)?.name||id;
 function applies(t){ const c=S.cfg; if(!c)return false;
   if(t.salt&&!c.salt)return false;
   if(t.gas&&c.fuel!=='gas')return false;
@@ -344,317 +596,612 @@ function applies(t){ const c=S.cfg; if(!c)return false;
   if(t.needs==='gen'&&!c.gen)return false;
   if(t.needs==='ac'&&!c.ac)return false;
   if(t.needs==='trailer'&&!c.trailer)return false;
-  return true;}
-function roleOK(t){ if(S.role==='all')return true;
-  if(S.role===t.aud)return true;
+  return true}
+function roleOK(t){ if(S.role===t.aud)return true;
   if(S.role==='captain'&&t.aud==='mate')return true;
-  if(S.role==='owner')return true; return false;}
-
-/* runtime instances (per meter) */
+  if(S.role==='owner')return true; return false}
 function rtInstances(){ const out=[];
   TASKS.filter(t=>t.cad==='rt'&&applies(t)).forEach(t=>{
     meterDefs().filter(m=>m.kind===t.meter).forEach(m=>{
-      out.push({t,m,inst:t.id+'@'+m.id});});});
-  return out;}
+      out.push({t,m,inst:t.id+'@'+m.id})})});
+  return out}
+
+/* latest record wins: sorted by date then hours */
+function recomputeRt(inst){const h=S.rtHist[inst]||[];
+  if(!h.length){delete S.rt[inst];return}
+  const sorted=[...h].sort((a,b)=>(a.d===b.d?(a.h??0)-(b.h??0):a.d<b.d?-1:1));
+  const last=sorted[sorted.length-1];
+  S.rt[inst]={h:last.h,d:last.d};if(last.manual)S.rt[inst].manual=true}
+function addRtRecord(inst,rec){(S.rtHist[inst]=S.rtHist[inst]||[]).push({id:uid(),...rec});
+  if(S.rtHist[inst].length>60)S.rtHist[inst].shift();
+  recomputeRt(inst)}
 
 function rtStatus(x){ const rec=S.rt[x.inst]; const cur=S.meters[x.m.id]?.h;
-  if(rec==null) return {cls:'base',txt:'No baseline — mark last done to start tracking',pct:0};
-  if(x.t.once&&rec) return {cls:'ok',txt:'Done ✓ (one-time)',pct:100};
+  if(rec==null) return {cls:'base',txt:'No baseline yet — set when it was last done',pct:0};
+  if(x.t.once&&rec) return {cls:'ok',txt:'Done (one-time service)',pct:100};
   const dueH=rec.h+x.t.iv;
   const hLeft=cur!=null?dueH-cur:null;
   let dLeft=null,dueDate=null;
   if(x.t.calM){dueDate=new Date(rec.d);dueDate.setMonth(dueDate.getMonth()+x.t.calM);
-    dLeft=Math.ceil((dueDate-now())/864e5);}
+    dLeft=Math.ceil((dueDate-now())/864e5)}
   const hoursOver=hLeft!=null&&hLeft<=0, dateOver=dLeft!=null&&dLeft<=0;
   const hoursSoon=hLeft!=null&&hLeft<=Math.max(25,x.t.iv*.15), dateSoon=dLeft!=null&&dLeft<=30;
   const pct=cur!=null?Math.min(100,Math.max(0,Math.round((cur-rec.h)/x.t.iv*100))):0;
-  const dd=dueDate?dueDate.toLocaleDateString(undefined,dueDate.getFullYear()===now().getFullYear()?{month:'short',day:'numeric'}:{month:'short',day:'numeric',year:'numeric'}):null;
+  const dd=dueDate?fmtD(dueDate):null;
   if(hoursOver||dateOver)return{cls:'bad',pct:100,
-    txt:hoursOver?`OVERDUE — ${Math.abs(hLeft)} hrs past (due at ${dueH})`:`OVERDUE — was due ${dd}`};
+    txt:hoursOver?(hLeft===0?`Due now — at ${dueH} hrs`:`Overdue by ${Math.abs(hLeft)} hrs (due at ${dueH})`):`Overdue — was due ${dd}`};
   if(hoursSoon||dateSoon)return{cls:'soon',pct,
     txt:hLeft!=null?`Due soon — ${hLeft} hrs to go (at ${dueH}${dd?` or ${dd}`:''})`:`Due soon — by ${dd}`};
   return{cls:'ok',pct,
-    txt:hLeft!=null?`OK — ${hLeft} hrs to go (at ${dueH}${dd?` or ${dd}`:''})`:`OK — next by ${dd}`};}
-
+    txt:hLeft!=null?`On track — next at ${dueH} hrs${dd?` or ${dd}`:''} (${hLeft} to go)`:`On track — next by ${dd}`}}
 function calStatus(t){ const last=S.cal[t.id];
-  if(!last)return{cls:'base',txt:'No baseline — mark last done'};
+  if(!last)return{cls:'base',txt:'No baseline — set when it was last done'};
   const due=new Date(last);due.setMonth(due.getMonth()+t.calM);
   const dLeft=Math.ceil((due-now())/864e5);
-  const dd=due.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
-  if(dLeft<=0)return{cls:'bad',txt:`OVERDUE — was due ${dd}`};
+  const dd=fmtD(due,true);
+  if(dLeft<=0)return{cls:'bad',txt:`Overdue — was due ${dd}`};
   if(dLeft<=30)return{cls:'soon',txt:`Due soon — ${dd}`};
-  return{cls:'ok',txt:`Next due ${dd}`};}
-
+  return{cls:'ok',txt:`Next due ${dd}`}}
 function dueList(){ const out=[];
   rtInstances().forEach(x=>{const st=rtStatus(x);
-    if(st.cls==='bad'||st.cls==='soon')out.push({kind:'rt',x,st});});
+    if(st.cls==='bad'||st.cls==='soon')out.push({kind:'rt',x,st})});
   TASKS.filter(t=>t.cad==='cal'&&applies(t)).forEach(t=>{const st=calStatus(t);
-    if(st.cls==='bad'||st.cls==='soon')out.push({kind:'cal',t,st});});
+    if(st.cls==='bad'||st.cls==='soon')out.push({kind:'cal',t,st})});
   out.sort((a,b)=>(a.st.cls==='bad'?0:1)-(b.st.cls==='bad'?0:1));
-  return out;}
+  return out}
+function shopList(){return S.items.filter(i=>i.par>0&&(i.qty||0)<i.par)
+  .map(i=>({...i,need:i.par-(i.qty||0)}))}
 
-/* ---------- render helpers ---------- */
-const $=s=>document.querySelector(s);
-function chips(t,extra){let h=`<span class="chip eq">${t.eq}</span>`;
-  if(t.salt)h+=`<span class="chip salt">SALT</span>`;
-  if(t.gas)h+=`<span class="chip gas">GAS</span>`;
-  if(extra)h+=extra; return h;}
+/* ---------- meter ops ---------- */
+function setMeter(id,h,manual){const prev=S.meters[id];
+  S.meters[id]={h,ts:Date.now()};if(manual)S.meters[id].manual=true;
+  (S.mHist[id]=S.mHist[id]||[]).push({h,ts:Date.now(),manual:!!manual});
+  if(S.mHist[id].length>200)S.mHist[id].shift();
+  logIt(`${manual?'Hours corrected':'Hours logged'} — ${mName(id)}: ${h}`,h);
+  return prev}
+function delReading(id,idx){const hist=S.mHist[id]||[];const rec=hist[idx];if(!rec)return;
+  hist.splice(idx,1);
+  const last=hist[hist.length-1];
+  if(last)S.meters[id]={h:last.h,ts:last.ts,...(last.manual?{manual:true}:{})};
+  else delete S.meters[id];
+  logIt(`Reading removed — ${mName(id)}: ${rec.h} hrs`,null);
+  save();draw();toast('Reading deleted')}
 
+/* ---------- header + nav ---------- */
 function header(){ const h=now().getHours();
-  $('#hi').textContent=(h<12?'Morning aboard':h<17?'Afternoon aboard':'Evening aboard')+
-    (S.cfg?` — ${S.cfg.name}`:'');
-  $('#hisub').textContent=now().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  $('#boatTitle').textContent=S.cfg?S.cfg.name:'Boat Log';
+  $('#hi').textContent=(h<12?'Morning aboard':h<17?'Afternoon aboard':'Evening aboard');
+  const wx=shopList().length;
+  $('#hisub').innerHTML=`${now().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}`+
+    (S.cfg?`<span class="sep"></span>${esc(S.cfg.name)}`:'');
+  $('#boatTitle').textContent='Boat Log';
   const R=[['mate','Mate'],['captain','Captain'],['owner','Owner']];
   const rb=$('#roles');rb.innerHTML='';
   R.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;
     if(S.role===k)b.className='on';
-    b.onclick=()=>{S.role=k;save();draw()};rb.appendChild(b);});}
-
-const NAV=[['today','⚓','Today'],['hours','⏱','Hours'],['sched','🗓','Schedule'],['log','📜','Log']];
+    b.onclick=()=>{S.role=k;save();draw()};rb.appendChild(b)})}
+const NAV=[['today','anchor','Today'],['hours','gauge','Hours'],['sched','cal','Schedule'],['boat','boat','Boat'],['log','book','Log']];
 function nav(){const n=$('#nav');n.innerHTML='';
-  const dueN=dueList().length;
-  NAV.forEach(([k,i,l])=>{const b=document.createElement('button');
+  const dueN=dueList().length, shopN=shopList().length;
+  NAV.forEach(([k,ic,l])=>{const b=document.createElement('button');
     if(S.view===k)b.className='on';
-    b.innerHTML=`<span class="i">${i}</span>${l}${k==='today'&&dueN?`<span class="bub">${dueN}</span>`:''}`;
-    b.onclick=()=>{S.view=k;save();draw()};n.appendChild(b);});}
+    const bub=k==='today'&&dueN?dueN:(k==='boat'&&shopN?shopN:0);
+    b.innerHTML=`${I(ic)}${l}${bub?`<span class="bub">${bub}</span>`:''}`;
+    b.onclick=()=>{S.view=k;save();draw();window.scrollTo(0,0)};n.appendChild(b)})}
 
-function taskRow(t,opts={}){ const k=dk(t);const isDone=!!S.done[k];
+/* ---------- shared renderers ---------- */
+function chips(t,extra){let h=`<span class="chip eq">${esc(t.eq)}</span>`;
+  if(t.salt)h+=`<span class="chip salt">SALT</span>`;
+  if(t.gas)h+=`<span class="chip gas">GAS</span>`;
+  if(extra)h+=extra; return h}
+function taskRow(t){ const k=dk(t);const isDone=!!S.done[k];
   const div=document.createElement('div');div.className='task'+(isDone?' done':'');
-  div.innerHTML=`<div class="cbx">${isDone?'✓':''}</div><div class="tbody">
-    <div class="lbl">${t.t}</div><div class="meta">${chips(t)}</div>
-    ${t.note?`<div class="note">${t.note}</div>`:''}
-    ${isDone?`<div class="note">✓ ${new Date(S.done[k].ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · ${S.done[k].role}</div>`:''}</div>`;
-  div.onclick=()=>{ if(S.done[k]){delete S.done[k];}
-    else{S.done[k]={ts:Date.now(),role:S.role};logIt(t.t);}
-    save();draw();};
-  return div;}
-
+  div.innerHTML=`<div class="cbx">${I('check')}</div><div class="tbody">
+    <div class="lbl">${esc(t.t)}</div><div class="meta">${chips(t)}</div>
+    ${t.note?`<div class="note">${esc(t.note)}</div>`:''}
+    ${isDone?`<div class="note">Done ${fmtT(S.done[k].ts)} · ${S.done[k].role}</div>`:''}</div>`;
+  div.onclick=()=>{buzz();
+    if(S.done[k]){delete S.done[k]}
+    else{S.done[k]={ts:Date.now(),role:S.role};logIt(t.t)}
+    save();draw()};
+  return div}
 function group(title,tasks,openDefault){ const g=document.createElement('div');
   const doneN=tasks.filter(t=>S.done[dk(t)]).length;
   const open=openDefault??(doneN<tasks.length);
   g.className='grp'+(open?' open':'');
-  g.innerHTML=`<div class="ghd"><h3>${title}</h3>
-    <span class="gcount">${doneN}/${tasks.length}</span><span class="chev">▶</span></div>
+  g.innerHTML=`<div class="ghd"><h3>${esc(title)}</h3>
+    <span class="gcount">${doneN}/${tasks.length}</span><span class="chev">${I('chev')}</span></div>
     <div class="glist"></div>`;
   const list=g.querySelector('.glist');
   tasks.forEach(t=>list.appendChild(taskRow(t)));
-  g.querySelector('.ghd').onclick=()=>{g.classList.toggle('open')};
-  return g;}
+  g.querySelector('.ghd').onclick=()=>g.classList.toggle('open');
+  return g}
+function cardEl(icon,title,pillHTML,tone){const c=document.createElement('div');c.className='card';
+  c.innerHTML=`<div class="hd"><span class="hico ${tone||''}">${I(icon)}</span><h2>${title}</h2>${pillHTML||''}</div>`;
+  return c}
 
-/* mark-done for rt / cal */
+/* ---------- service completion ---------- */
 function markRt(x){ const cur=S.meters[x.m.id]?.h;
-  if(cur==null){alert('Log '+x.m.name+' hours first — the service is recorded at a meter reading.');return;}
-  S.rt[x.inst]={h:cur,d:todayISO()};
-  logIt(x.t.t+' — '+x.m.name,x.m.name,cur);save();draw();}
-function markCal(t){S.cal[t.id]=todayISO();logIt(t.t);save();draw();}
+  if(cur==null){toast(`Log ${x.m.name} hours first — services record at a meter reading`);return}
+  addRtRecord(x.inst,{h:cur,d:todayISO()});
+  logIt(`${x.t.t} — ${x.m.name}`,cur);save();draw();
+  toast('Service logged — add a proof photo from its history');buzz()}
+function markCal(t,dateISO){S.cal[t.id]=dateISO||todayISO();
+  logIt(t.t+(dateISO&&dateISO!==todayISO()?` (backdated ${fmtD(dateISO,true)})`:''));
+  save();draw();buzz()}
 
 /* ---------- views ---------- */
 function vToday(m){
-  /* meters card */
-  const card=document.createElement('div');card.className='card';
-  card.innerHTML=`<div class="hd"><h2>⏱ Log today's hours</h2>
-    <span class="tag" id="mtag"></span></div>
-    <div class="meters" id="mrows"></div><div class="merr" id="merr"></div>
-    <div class="savebar"><button class="btn teal" id="msave">Save readings</button></div>`;
-  const rows=card.querySelector('#mrows');
+  const card=cardEl('gauge','Log today’s hours',`<span class="pill info" id="mtag"><span class="dot"></span><span></span></span>`);
+  card.querySelector('.hico').classList.add('teal');
+  const body=document.createElement('div');body.className='meters';body.id='mrows';card.appendChild(body);
+  const err=document.createElement('div');err.className='merr';err.id='merr';card.appendChild(err);
+  const sb=document.createElement('div');sb.className='savebar';
+  sb.innerHTML=`<button class="btn teal" id="msave">${I('check','sm')} Save readings</button>`;card.appendChild(sb);
   meterDefs().forEach(md=>{const rec=S.meters[md.id];
     const r=document.createElement('div');r.className='mrow';
-    r.innerHTML=`<div class="mico">${md.icon}</div>
-      <div class="mname"><b>${md.name}</b><div class="mlast">${rec?`last ${rec.h} hrs · ${new Date(rec.ts).toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:'no reading yet'}</div></div>
+    r.innerHTML=`<div class="mico">${I(md.kind==='gen'?'bolt':'gauge')}</div>
+      <div class="mname"><b>${md.name}</b><div class="mlast">${rec?`last ${rec.h} hrs · ${fmtD(rec.ts)}${rec.manual?' · corrected':''}`:'no reading yet'}</div></div>
       <input inputmode="decimal" type="number" step="0.1" data-m="${md.id}" placeholder="${rec?rec.h:'0'}">
       <div class="delta" data-d="${md.id}"></div>`;
-    rows.appendChild(r);});
+    body.appendChild(r)});
   const anyRec=meterDefs().some(md=>S.meters[md.id]);
-  card.querySelector('#mtag').textContent=anyRec?'tracking':'start here';
+  card.querySelector('#mtag span:last-child').textContent=anyRec?'tracking':'start here';
   card.querySelector('#msave').onclick=()=>{
-    const err=card.querySelector('#merr');err.style.display='none';
-    let saved=0;
+    err.style.display='none';let saved=0;
     for(const inp of card.querySelectorAll('input[data-m]')){
       const v=inp.value.trim();if(v==='')continue;
       const nv=+v;const id=inp.dataset.m;const rec=S.meters[id];
+      if(!isFinite(nv)||nv<0)continue;
       if(rec&&nv<rec.h&&!inp.dataset.force){
-        err.textContent=`${meterDefs().find(x=>x.id===id).name}: ${nv} is lower than last (${rec.h}). Tap Save again to force (meter replaced).`;
-        err.style.display='block';inp.dataset.force='1';return;}
-      const delta=rec?(nv-rec.h):0;
-      S.meters[id]={h:nv,ts:Date.now()};
-      card.querySelector(`[data-d="${id}"]`).textContent=rec?`+${delta.toFixed(1)}`:'set';
-      logIt(`Hours logged — ${meterDefs().find(x=>x.id===id).name}: ${nv}`,null,nv);saved++;}
-    if(saved){save();setTimeout(draw,350);}};
+        err.textContent=`${mName(id)}: ${nv} is lower than last (${rec.h}). Tap Save again to confirm (typo fix / meter change) — or use Edit on the Hours tab.`;
+        err.style.display='block';inp.dataset.force='1';return}
+      const wasManual=rec&&nv<rec.h;
+      setMeter(id,nv,wasManual);
+      card.querySelector(`[data-d="${id}"]`).textContent=rec?(nv>=rec.h?`+${(nv-rec.h).toFixed(1)}`:'set'):'set';
+      saved++}
+    if(saved){save();buzz();setTimeout(draw,320)}};
   m.appendChild(card);
 
-  /* due now */
   const due=dueList();
   if(due.length){
-    const dcard=document.createElement('div');dcard.className='card due';
-    dcard.innerHTML=`<div class="hd"><h2>🔧 Service triggered</h2>
-      <span class="tag ${due.some(d=>d.st.cls==='bad')?'bad':'warn'}">${due.length} due</span></div>`;
+    const bad=due.some(d=>d.st.cls==='bad');
+    const dcard=cardEl('wrench','Service triggered',
+      `<span class="pill ${bad?'bad':'warn'}"><span class="dot"></span>${due.length} due</span>`,bad?'bad':'warn');
+    dcard.classList.add('due');
     due.forEach(d=>{const row=document.createElement('div');
       row.className='task '+(d.st.cls==='bad'?'overdue':'soon');
       if(d.kind==='rt'){row.innerHTML=`<div class="tbody">
-        <div class="lbl">${d.x.t.t}</div>
+        <div class="lbl">${esc(d.x.t.t)}</div>
         <div class="meta">${chips(d.x.t,`<span class="chip">${d.x.m.name}</span><span class="chip">every ${d.x.t.iv} hrs${d.x.t.calM?' / '+d.x.t.calM+' mo':''}</span>`)}</div>
-        <div class="st ${d.st.cls}">${d.st.txt}</div>
-        <div class="actrow"><button class="mini go">✓ Done today at ${S.meters[d.x.m.id]?.h??'—'} hrs</button></div></div>`;
-        row.querySelector('.mini').onclick=e=>{e.stopPropagation();markRt(d.x);};}
-      else{row.innerHTML=`<div class="tbody"><div class="lbl">${d.t.t}</div>
+        <div class="st ${d.st.cls}">${I(d.st.cls==='bad'?'alert':'clock','xs')} ${d.st.txt}</div>
+        <div class="actrow"><button class="mini go">${I('check','xs')} Done today at ${S.meters[d.x.m.id]?.h??'—'} hrs</button></div></div>`;
+        row.querySelector('.mini').onclick=e=>{e.stopPropagation();markRt(d.x)}}
+      else{row.innerHTML=`<div class="tbody"><div class="lbl">${esc(d.t.t)}</div>
         <div class="meta">${chips(d.t,`<span class="chip">every ${d.t.calM} mo</span>`)}</div>
-        <div class="st ${d.st.cls}">${d.st.txt}</div>
-        <div class="actrow"><button class="mini go">✓ Done today</button></div></div>`;
-        row.querySelector('.mini').onclick=e=>{e.stopPropagation();markCal(d.t);};}
-      dcard.appendChild(row);});
-    m.appendChild(dcard);
-  }
+        <div class="st ${d.st.cls}">${I(d.st.cls==='bad'?'alert':'clock','xs')} ${d.st.txt}</div>
+        <div class="actrow"><button class="mini go">${I('check','xs')} Done today</button></div></div>`;
+        row.querySelector('.mini').onclick=e=>{e.stopPropagation();markCal(d.t)}}
+      dcard.appendChild(row)});
+    m.appendChild(dcard)}
 
-  /* pre-departure */
   const pre=TASKS.filter(t=>t.cad==='pre'&&applies(t)&&roleOK(t));
   const preDone=pre.filter(t=>S.done[dk(t)]).length;
   const ready=document.createElement('div');ready.className='ready'+(pre.length&&preDone===pre.length?' show':'');
-  ready.innerHTML=`<div style="font-size:26px">✅</div><div><div class="big">Vessel ready</div>
+  ready.innerHTML=`<div class="rico">${I('check')}</div><div><div class="big">Vessel ready</div>
     <div class="sm">Pre-departure complete — ${preDone}/${pre.length} · logged by ${S.role}</div></div>`;
   m.appendChild(ready);
   const prog=document.createElement('div');prog.className='prog';
   prog.innerHTML=`<i style="width:${pre.length?Math.round(preDone/pre.length*100):0}%"></i>`;
   m.appendChild(prog);
-
-  const pcard=document.createElement('div');pcard.className='card';
-  pcard.innerHTML=`<div class="hd"><h2>☀️ Pre-departure</h2><span class="tag">${preDone}/${pre.length}</span></div>`;
+  const pcard=cardEl('sun','Pre-departure',`<span class="pill"><span class="dot"></span>${preDone}/${pre.length}</span>`);
   ['Engine & Systems','Safety (USCG)','Departure'].forEach(gname=>{
-    const gt=pre.filter(t=>t.g===gname);if(gt.length)pcard.appendChild(group(gname,gt));});
+    const gt=pre.filter(t=>t.g===gname);if(gt.length)pcard.appendChild(group(gname,gt))});
   m.appendChild(pcard);
 
-  /* post-trip */
   const post=TASKS.filter(t=>t.cad==='post'&&applies(t)&&roleOK(t));
   const postDone=post.filter(t=>S.done[dk(t)]).length;
-  const pt=document.createElement('div');pt.className='card';
-  pt.innerHTML=`<div class="hd"><h2>🌙 Post-trip</h2><span class="tag">${postDone}/${post.length}</span></div>`;
-  pt.appendChild(group('Wash down & shutdown',post,postDone<post.length&&postDone>0));
+  const pt=cardEl('moon','Post-trip',`<span class="pill"><span class="dot"></span>${postDone}/${post.length}</span>`);
+  pt.appendChild(group('Wash down & shutdown',post,postDone>0&&postDone<post.length));
   m.appendChild(pt);
 
   const hint=document.createElement('p');hint.className='hint';
-  hint.textContent='Checklists reset daily. Hours you log here drive the service triggers automatically.';
-  m.appendChild(hint);
-}
+  hint.textContent='Checklists reset each day. Hours logged here drive every service clock automatically.';
+  m.appendChild(hint)}
 
 function vHours(m){
   const insts=rtInstances();
   meterDefs().forEach(md=>{
     const rec=S.meters[md.id];
-    const card=document.createElement('div');card.className='card';
-    card.innerHTML=`<div class="hd"><h2>${md.icon} ${md.name}</h2>
-      <span class="tag">${insts.filter(x=>x.m.id===md.id&&['bad','soon'].includes(rtStatus(x).cls)).length||'no'} due</span></div>
-      <div class="meterhead"><span class="big">${rec?rec.h:'—'}</span><span class="unit">hrs</span>
-      <span class="upd">${rec?'updated '+new Date(rec.ts).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'log hours on Today'}</span></div>`;
+    const dueN=insts.filter(x=>x.m.id===md.id&&['bad','soon'].includes(rtStatus(x).cls)).length;
+    const card=cardEl(md.kind==='gen'?'bolt':'gauge',md.name,
+      `<span class="pill ${dueN?'warn':'good'}"><span class="dot"></span>${dueN?dueN+' due':'on track'}</span>`,dueN?'warn':'teal');
+    const mh=document.createElement('div');mh.className='meterhead';
+    mh.innerHTML=`<span class="big">${rec?rec.h:'—'}</span><span class="unit">hrs</span>
+      <span class="upd">${rec?`updated ${fmtD(rec.ts)}${rec.manual?'<br>manually corrected':''}`:'log hours on Today'}</span>`;
+    card.appendChild(mh);
+    const lr=document.createElement('div');lr.className='linkrow';
+    lr.innerHTML=`<button class="linkbtn" data-a="edit">${I('pencil','xs')} Edit hours</button>
+      <button class="linkbtn" data-a="hist">${I('hist','xs')} Readings</button>`;
+    card.appendChild(lr);
+    /* edit hours inline */
+    const ef=document.createElement('div');ef.className='inline';ef.style.margin='0 16px 12px';
+    ef.innerHTML=`<div class="frow"><div style="flex:1"><label>Set ${md.name} hours</label>
+      <input type="number" step="0.1" inputmode="decimal" style="width:100%" value="${rec?rec.h:''}" placeholder="0"></div>
+      <button class="btn slim teal" style="margin-top:14px">Save</button></div>
+      <div class="fnote">Direct correction — use for typos or a replaced meter. Every reading stays in history.</div>`;
+    ef.querySelector('.btn').onclick=()=>{const v=+ef.querySelector('input').value;
+      if(!isFinite(v)||v<0){toast('Enter a valid number');return}
+      setMeter(md.id,v,true);save();draw();toast(`${md.name} set to ${v} hrs`)};
+    card.appendChild(ef);
+    /* readings history */
+    const hv=document.createElement('div');hv.className='hist';
+    const hist=(S.mHist[md.id]||[]);
+    if(!hist.length)hv.innerHTML=`<div class="hrow"><span class="hd2">No readings yet.</span></div>`;
+    hist.slice(-8).reverse().forEach(r0=>{const idx=hist.indexOf(r0);
+      const hr=document.createElement('div');hr.className='hrow';
+      hr.innerHTML=`<span class="hh">${r0.h} hrs</span><span class="hd2">${fmtD(r0.ts)} · ${fmtT(r0.ts)}${r0.manual?' · <b>manual</b>':''}</span>
+        <button class="ibtn">${I('trash')}</button>`;
+      armBtn(hr.querySelector('.ibtn'),()=>delReading(md.id,idx));
+      hv.appendChild(hr)});
+    card.appendChild(hv);
+    lr.querySelector('[data-a=edit]').onclick=()=>{ef.classList.toggle('show')};
+    lr.querySelector('[data-a=hist]').onclick=()=>{hv.classList.toggle('show')};
+
     insts.filter(x=>x.m.id===md.id).forEach(x=>{
       const st=rtStatus(x);
       const row=document.createElement('div');row.className='task';
-      row.innerHTML=`<div class="tbody"><div class="lbl">${x.t.t}</div>
+      const recs=(S.rtHist[x.inst]||[]);
+      row.innerHTML=`<div class="tbody"><div class="lbl">${esc(x.t.t)}</div>
         <div class="meta">${chips(x.t,`<span class="chip">every ${x.t.iv} hrs${x.t.calM?' / '+x.t.calM+' mo':''}</span>`)}</div>
-        ${x.t.note?`<div class="note">${x.t.note}</div>`:''}
-        <div class="st ${st.cls}">${st.txt}</div>
+        ${x.t.note?`<div class="note">${esc(x.t.note)}</div>`:''}
+        <div class="st ${st.cls}">${I(st.cls==='bad'?'alert':st.cls==='ok'?'check':'clock','xs')} ${st.txt}</div>
         <div class="pbar"><i class="${st.cls==='bad'?'bad':st.cls==='soon'?'warn':''}" style="width:${st.pct}%"></i></div>
         <div class="actrow">
-          <button class="mini ${st.cls==='base'?'go':''}">${st.cls==='base'?'Set baseline (done at current hrs)':'✓ Mark done now'}</button>
-        </div></div>`;
-      row.querySelector('.mini').onclick=()=>markRt(x);
-      card.appendChild(row);});
-    m.appendChild(card);});
+          <button class="mini ${st.cls==='base'?'':'go'}" data-a="done">${I('check','xs')} ${st.cls==='base'?'Done at current hrs':'Mark done now'}</button>
+          <button class="mini line" data-a="setlast">${I('pencil','xs')} Set last done…</button>
+          ${recs.length?`<button class="mini line" data-a="rh">${I('hist','xs')} ${recs.length}</button>`:''}
+        </div>
+        <div class="inline" data-f="setlast">
+          <div class="frow">
+            <div><label>Hours</label><input type="number" step="0.1" inputmode="decimal" style="width:96px" placeholder="e.g. 1240"></div>
+            <div><label>Date</label><input type="date" value="${todayISO()}" max="${todayISO()}"></div>
+            <button class="btn slim teal" style="margin-top:14px">Save</button></div>
+          <div class="fnote">Backfill when this was actually last serviced — the clock starts there. A wrong number is worse than an absent one.</div>
+        </div>
+        <div class="hist" data-f="rh"></div></div>`;
+      row.querySelector('[data-a=done]').onclick=()=>markRt(x);
+      const slf=row.querySelector('[data-f=setlast]');
+      row.querySelector('[data-a=setlast]').onclick=()=>slf.classList.toggle('show');
+      slf.querySelector('.btn').onclick=()=>{
+        const hv2=+slf.querySelector('input[type=number]').value;
+        const dv=slf.querySelector('input[type=date]').value;
+        if(!isFinite(hv2)||hv2<0||!dv){toast('Enter hours and a date');return}
+        const cur=S.meters[x.m.id]?.h;
+        if(cur!=null&&hv2>cur){toast(`That's above the current meter (${cur}). Check the number.`);return}
+        addRtRecord(x.inst,{h:hv2,d:dv,manual:true});
+        logIt(`Baseline set — ${x.t.t} (${x.m.name}): ${hv2} hrs, ${fmtD(dv,true)}`,hv2);
+        save();draw();toast('Baseline saved')};
+      const rh=row.querySelector('[data-f=rh]');
+      if(rh){recs.slice().reverse().forEach(r0=>{
+          const hr=document.createElement('div');hr.className='hrow';
+          hr.innerHTML=`<span class="hh">${r0.h} hrs</span>
+            <span class="hd2">${fmtD(r0.d,true)}${r0.manual?' · <b>manual</b>':''}</span>
+            ${r0.ph?`<img class="hthumb" data-ph="${r0.ph}" alt="proof">`:`<button class="ibtn" data-a="cam">${I('cam')}</button>`}
+            <button class="ibtn" data-a="del">${I('trash')}</button>`;
+          const cam=hr.querySelector('[data-a=cam]');
+          if(cam)cam.onclick=e=>{e.stopPropagation();pickPhoto(async id=>{r0.ph=id;save();draw();toast('Proof photo attached')})};
+          armBtn(hr.querySelector('[data-a=del]'),async()=>{
+            await PB.del(r0.ph);
+            const arr=S.rtHist[x.inst];arr.splice(arr.indexOf(r0),1);
+            recomputeRt(x.inst);
+            logIt(`Service record removed — ${x.t.t} (${r0.h} hrs)`);
+            save();draw();toast('Record deleted')});
+          rh.appendChild(hr)});
+        const rbtn=row.querySelector('[data-a=rh]');
+        if(rbtn)rbtn.onclick=()=>rh.classList.toggle('show')}
+      card.appendChild(row)});
+    m.appendChild(card)});
   const hint=document.createElement('p');hint.className='hint';
-  hint.textContent='“Whichever comes first”: every service fires on run-hours OR the calendar backstop. Baselines = when it was last actually done.';
-  m.appendChild(hint);
-}
+  hint.textContent='"Whichever comes first": every service fires on run-hours OR its calendar backstop. Edit hours, backfill baselines, and delete mistakes right here.';
+  m.appendChild(hint)}
 
 function vSched(m){
   const wk=TASKS.filter(t=>t.cad==='weekly'&&applies(t)&&roleOK(t));
   const mo=TASKS.filter(t=>t.cad==='monthly'&&applies(t)&&roleOK(t));
   const cal=TASKS.filter(t=>t.cad==='cal'&&applies(t));
   const big=TASKS.filter(t=>t.cad==='big'&&applies(t));
-  const wc=document.createElement('div');wc.className='card';
-  wc.innerHTML=`<div class="hd"><h2>🧽 This week</h2><span class="tag">${wk.filter(t=>S.done[dk(t)]).length}/${wk.length}</span></div>`;
+  const wc=cardEl('drop','This week',`<span class="pill"><span class="dot"></span>${wk.filter(t=>S.done[dk(t)]).length}/${wk.length}</span>`);
   wc.appendChild(group('Weekly routine',wk,true));m.appendChild(wc);
-  const mc=document.createElement('div');mc.className='card';
-  mc.innerHTML=`<div class="hd"><h2>🗓 This month</h2><span class="tag">${mo.filter(t=>S.done[dk(t)]).length}/${mo.length}</span></div>`;
+  const mc=cardEl('cal','This month',`<span class="pill"><span class="dot"></span>${mo.filter(t=>S.done[dk(t)]).length}/${mo.length}</span>`);
   mc.appendChild(group('Monthly inspections',mo,false));m.appendChild(mc);
 
-  const cc=document.createElement('div');cc.className='card';
-  cc.innerHTML=`<div class="hd"><h2>🛠 Seasonal & annual</h2></div>`;
+  const cc=cardEl('wrench','Seasonal & annual');
   cal.forEach(t=>{const st=calStatus(t);
     const row=document.createElement('div');row.className='task';
-    row.innerHTML=`<div class="tbody"><div class="lbl">${t.t}</div>
+    row.innerHTML=`<div class="tbody"><div class="lbl">${esc(t.t)}</div>
       <div class="meta">${chips(t,`<span class="chip">every ${t.calM} mo</span>`)}</div>
-      ${t.note?`<div class="note">${t.note}</div>`:''}
-      <div class="duedate ${st.cls}">${st.txt}</div>
-      <div class="actrow"><button class="mini ${st.cls==='base'?'go':''}">${st.cls==='base'?'Set baseline (done today)':'✓ Done today'}</button></div></div>`;
-    row.querySelector('.mini').onclick=()=>markCal(t);
-    cc.appendChild(row);});
+      ${t.note?`<div class="note">${esc(t.note)}</div>`:''}
+      <div class="st ${st.cls}">${I(st.cls==='bad'?'alert':st.cls==='ok'?'check':'clock','xs')} ${st.txt}</div>
+      <div class="actrow">
+        <button class="mini ${st.cls==='base'?'':'go'}" data-a="done">${I('check','xs')} Done today</button>
+        <button class="mini line" data-a="bd">${I('pencil','xs')} Set date…</button></div>
+      <div class="inline" data-f="bd"><div class="frow">
+        <div><label>When was it done?</label><input type="date" value="${S.cal[t.id]||todayISO()}" max="${todayISO()}"></div>
+        <button class="btn slim teal" style="margin-top:14px">Save</button></div></div></div>`;
+    row.querySelector('[data-a=done]').onclick=()=>markCal(t);
+    const bd=row.querySelector('[data-f=bd]');
+    row.querySelector('[data-a=bd]').onclick=()=>bd.classList.toggle('show');
+    bd.querySelector('.btn').onclick=()=>{const dv=bd.querySelector('input').value;
+      if(!dv){toast('Pick a date');return}
+      markCal(t,dv);toast('Saved')};
+    cc.appendChild(row)});
   m.appendChild(cc);
 
-  const bc=document.createElement('div');bc.className='card';
-  bc.innerHTML=`<div class="hd"><h2>💰 Big-ticket (condition-driven)</h2></div>`;
+  const bc=cardEl('box','Big-ticket (condition-driven)');
   big.forEach(t=>{const row=document.createElement('div');row.className='task';
-    row.innerHTML=`<div class="tbody"><div class="lbl">${t.t}</div>
-      <div class="meta">${chips(t)}</div>${t.note?`<div class="note">${t.note}</div>`:''}</div>`;
-    bc.appendChild(row);});
-  m.appendChild(bc);
-}
+    row.innerHTML=`<div class="tbody"><div class="lbl">${esc(t.t)}</div>
+      <div class="meta">${chips(t)}</div>${t.note?`<div class="note">${esc(t.note)}</div>`:''}</div>`;
+    bc.appendChild(row)});
+  m.appendChild(bc)}
 
+/* ---------- BOAT tab: vessel record + papers + supplies ---------- */
+const VFIELDS=[['hin','Hull ID (HIN)'],['reg','Registration #'],['mmsi','MMSI / VHF'],
+  ['engSer','Engine serial(s)'],['ins','Insurance / policy'],['notesV','Notes']];
+function vBoat(m){
+  /* vessel record */
+  const v=S.vessel;
+  const vc=cardEl('boat',S.cfg?esc(S.cfg.name):'Vessel',
+    `<button class="ibtn" id="vedit">${I('pencil')}</button>`,'teal');
+  VFIELDS.forEach(([k,l])=>{const r=document.createElement('div');r.className='vrow';
+    r.innerHTML=`<span class="vk">${l}</span><span class="vv ${v[k]?'':'vnone'}">${v[k]?esc(v[k]):'—'}</span>`;
+    vc.appendChild(r)});
+  vc.querySelector('#vedit').onclick=()=>vesselSheet();
+  m.appendChild(vc);
+
+  /* papers & docs */
+  const dc=cardEl('doc','Papers & records',
+    `<span class="pill info"><span class="dot"></span>on this tag</span>`);
+  const grid=document.createElement('div');grid.className='docgrid';
+  v.docs.forEach(d0=>{const t=document.createElement('div');t.className='doc';
+    t.innerHTML=`<img data-ph="${d0.ph}" alt="${esc(d0.label)}"><div class="dl">${esc(d0.label)}</div>
+      <button class="dx">${I('x')}</button>`;
+    armBtn(t.querySelector('.dx'),async()=>{await PB.del(d0.ph);
+      v.docs.splice(v.docs.indexOf(d0),1);logIt(`Document removed — ${d0.label}`);
+      save();draw();toast('Document deleted')});
+    grid.appendChild(t)});
+  const add=document.createElement('button');add.className='addtile';
+  add.innerHTML=`${I('cam')} Add document`;
+  add.onclick=()=>docSheet();
+  grid.appendChild(add);
+  dc.appendChild(grid);
+  const dh=document.createElement('div');dh.className='note';dh.style.cssText='padding:0 16px 13px';
+  dh.textContent='Registration, insurance card, engine plates, survey, receipts — photograph them once and they ride on the boat’s tag.';
+  dc.appendChild(dh);
+  m.appendChild(dc);
+
+  /* shopping list */
+  const low=shopList();
+  if(low.length){
+    const sc=cardEl('cart','Shopping list',
+      `<span class="pill warn"><span class="dot"></span>${low.length} below par</span>`,'warn');
+    low.forEach(i=>{const r=document.createElement('div');r.className='shoprow';
+      r.innerHTML=`<span style="flex:1">${esc(i.name)}${i.part?` <span class="note" style="display:inline">· ${esc(i.part)}</span>`:''}</span><b>need ${i.need}</b>`;
+      sc.appendChild(r)});
+    const ar=document.createElement('div');ar.className='savebar';ar.style.paddingTop='10px';
+    ar.innerHTML=`<button class="btn ghost slim" id="copyshop">${I('copy','sm')} Copy list</button>`;
+    sc.appendChild(ar);
+    sc.querySelector('#copyshop').onclick=async()=>{
+      const txt='Boat supplies needed — '+(S.cfg?.name||'boat')+':\n'+
+        low.map(i=>`• ${i.name}${i.part?' ('+i.part+')':''} × ${i.need}`).join('\n');
+      try{if(navigator.share){await navigator.share({text:txt})}
+        else{await navigator.clipboard.writeText(txt);toast('List copied')}}
+      catch(e){try{await navigator.clipboard.writeText(txt);toast('List copied')}catch(_){toast('Could not copy')}}};
+    m.appendChild(sc)}
+
+  /* supplies */
+  const cats=['Oil & Fluids','Filters','Belts & Impellers','Zincs & Hardware','Cleaning & Finish','Safety','Other'];
+  const sc2=cardEl('box','Supplies & favorites',
+    `<button class="ibtn" id="iadd">${I('plus')}</button>`);
+  if(!S.items.length){
+    const e=document.createElement('div');e.className='empty';
+    e.innerHTML=`${I('box')}<div class="et">Keep the boat’s staples here — the exact oil, filters, belts, cleaners and wax that work — with par levels so you always know what to buy.</div>`;
+    sc2.appendChild(e);
+    const qc=document.createElement('div');qc.className='quickchips';
+    [['Engine oil','Oil & Fluids'],['Oil filter','Filters'],['Fuel filter / separator','Filters'],
+     ['Raw-water impeller','Belts & Impellers'],['Serpentine belt','Belts & Impellers'],
+     ['Zinc anodes','Zincs & Hardware'],['Boat soap','Cleaning & Finish'],['Vinyl protectant','Cleaning & Finish'],
+     ['Wax / sealant','Cleaning & Finish'],['Gasket / sealant','Zincs & Hardware']]
+      .forEach(([n,c0])=>{const b=document.createElement('button');b.className='qc';b.textContent='+ '+n;
+        b.onclick=()=>itemSheet({name:n,cat:c0});qc.appendChild(b)});
+    sc2.appendChild(qc)}
+  cats.forEach(cat=>{
+    const items=S.items.filter(i=>i.cat===cat);
+    if(!items.length)return;
+    const gh=document.createElement('div');gh.className='logday';gh.textContent=cat;sc2.appendChild(gh);
+    items.forEach(i=>{const r=document.createElement('div');
+      const isLow=i.par>0&&(i.qty||0)<i.par;
+      r.className='srow'+(isLow?' low':'');
+      r.innerHTML=`<div class="sbody"><div class="sname">${esc(i.name)}</div>
+        <div class="ssub">${[i.part,i.note].filter(Boolean).map(esc).join(' · ')||''}</div></div>
+        <div><div class="qty"><button data-a="minus">−</button><span class="qn">${i.qty||0}</span><button data-a="plus">+</button></div>
+        ${i.par>0?`<div class="parchip">par ${i.par}${isLow?' · low':''}</div>`:''}</div>
+        <button class="ibtn" data-a="edit">${I('pencil')}</button>`;
+      r.querySelector('[data-a=minus]').onclick=()=>{i.qty=Math.max(0,(i.qty||0)-1);save();draw()};
+      r.querySelector('[data-a=plus]').onclick=()=>{i.qty=(i.qty||0)+1;save();draw()};
+      r.querySelector('[data-a=edit]').onclick=()=>itemSheet(i);
+      sc2.appendChild(r)})});
+  sc2.querySelector('#iadd').onclick=()=>itemSheet();
+  m.appendChild(sc2);
+  const hint=document.createElement('p');hint.className='hint';
+  hint.textContent='Everything on this tab travels with the boat: identity, paperwork, and the parts that keep it running.';
+  m.appendChild(hint)}
+
+/* ---------- LOG tab ---------- */
 function vLog(m){
-  const c=document.createElement('div');c.className='card';
-  c.innerHTML=`<div class="hd"><h2>📜 Ship's log</h2><span class="tag">${S.log.length} entries</span></div>`;
-  if(!S.log.length){c.innerHTML+=`<p class="hint" style="padding:16px">Nothing yet — checks and services you complete land here with time, hours, and who did it.</p>`;}
+  const c=cardEl('pencil','New entry');
+  const comp=document.createElement('div');comp.className='composer';
+  comp.innerHTML=`
+    <div class="crow" style="margin:0 0 9px">
+      <div class="segsm" id="ltype"><button data-t="note" class="on">Note</button><button data-t="trip">Trip</button></div>
+      <button class="ibtn" id="lcam" style="margin-left:auto">${I('cam')}</button>
+    </div>
+    <textarea id="ltxt" placeholder="What happened aboard? Work done, conditions, things to remember…"></textarea>
+    <div class="crow" id="placerow" style="display:none">
+      <input type="text" id="lplace" placeholder="Where to? (e.g. Smith Island, fuel dock)">
+    </div>
+    <div class="attach" id="latt"></div>
+    <div class="crow" style="justify-content:flex-end"><button class="btn teal slim" id="lsave">${I('check','sm')} Add to log</button></div>`;
+  c.appendChild(comp);m.appendChild(c);
+  let ltype='note',lphs=[];
+  const tseg=comp.querySelector('#ltype');
+  tseg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    ltype=b.dataset.t;
+    tseg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    comp.querySelector('#placerow').style.display=ltype==='trip'?'flex':'none'});
+  function drawAtt(){const a=comp.querySelector('#latt');a.innerHTML='';
+    lphs.forEach(id=>{const w=document.createElement('div');w.className='athumb';
+      w.innerHTML=`<img data-ph="${id}"><button class="ax">✕</button>`;
+      w.querySelector('.ax').onclick=async()=>{await PB.del(id);lphs=lphs.filter(x=>x!==id);drawAtt()};
+      a.appendChild(w)});hydrate(a)}
+  comp.querySelector('#lcam').onclick=()=>{if(lphs.length>=3){toast('Up to 3 photos per entry');return}
+    pickPhoto(id=>{lphs.push(id);drawAtt()})};
+  comp.querySelector('#lsave').onclick=()=>{
+    const txt=comp.querySelector('#ltxt').value.trim();
+    const place=comp.querySelector('#lplace').value.trim();
+    if(!txt&&!lphs.length){toast('Write something first');return}
+    S.log.unshift({id:uid(),ts:Date.now(),type:ltype,txt:txt||(ltype==='trip'?'Trip':'Note'),
+      place:ltype==='trip'&&place?place:null,ph:lphs.length?lphs:null,role:S.role});
+    lphs=[];save();draw();toast(ltype==='trip'?'Trip logged':'Note added');buzz()};
+
+  const lc=cardEl('book','Ship’s log',`<span class="pill"><span class="dot"></span>${S.log.length}</span>`);
+  if(!S.log.length){const e=document.createElement('div');e.className='empty';
+    e.innerHTML=`${I('book')}<div class="et">Nothing yet — checks, services, notes and trips all land here with time, hours and who did it.</div>`;
+    lc.appendChild(e)}
   let lastDay='';
-  S.log.slice(0,120).forEach(e=>{
+  S.log.slice(0,150).forEach(e=>{
     const d=new Date(e.ts);const day=d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
-    if(day!==lastDay){lastDay=day;const dh=document.createElement('div');dh.className='logday';dh.textContent=day;c.appendChild(dh);}
+    if(day!==lastDay){lastDay=day;const dh=document.createElement('div');dh.className='logday';dh.textContent=day;lc.appendChild(dh)}
     const r=document.createElement('div');r.className='logrow';
-    r.innerHTML=`<span class="t">${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</span>
-      <span><b>${e.txt}</b>${e.h!=null?` · ${e.h} hrs`:''}</span><span class="who">${e.role}</span>`;
-    c.appendChild(r);});
-  m.appendChild(c);
-}
+    const tchip=e.type==='trip'?`<span class="chip trip">TRIP</span>`:e.type==='note'?`<span class="chip note2">NOTE</span>`:'';
+    r.innerHTML=`<span class="t">${fmtT(e.ts)}</span>
+      <div class="lbody"><b>${esc(e.txt)}</b>
+        <div class="lsub">${tchip}${e.place?`${I('pin','xs')} ${esc(e.place)}`:''}${e.h!=null?`<span>${e.h} hrs</span>`:''}<span>· ${e.role}</span></div>
+        ${e.ph?`<div class="lthumbs">${e.ph.map(p=>`<img data-ph="${p}">`).join('')}</div>`:''}</div>
+      <button class="ibtn">${I('trash')}</button>`;
+    armBtn(r.querySelector('.ibtn'),async()=>{
+      if(e.ph)for(const p of e.ph)await PB.del(p);
+      S.log.splice(S.log.indexOf(e),1);save();draw();toast('Entry deleted')});
+    lc.appendChild(r)});
+  m.appendChild(lc)}
+
+/* ---------- sheets ---------- */
+function openSheet(html){const ov=$('#ov'),sh=$('#sheet');
+  sh.innerHTML=`<div class="handle"></div>`+html;ov.classList.add('show');return sh}
+function closeSheet(){$('#ov').classList.remove('show')}
+$('#ov').addEventListener('click',e=>{if(e.target.id==='ov')closeSheet()});
+
+function vesselSheet(){const v=S.vessel;
+  const sh=openSheet(`<h2>Vessel record</h2>
+    <p class="sub">The boat’s identity — the stuff you dig for at the worst time. It lives on the tag.</p>
+    ${VFIELDS.map(([k,l])=>`<div class="f"><label>${l}</label><input type="text" data-k="${k}" value="${esc(v[k]||'')}"></div>`).join('')}
+    <button class="btn teal" id="vs">Save</button>
+    <button class="btn ghost" id="vc" style="margin-top:8px">Cancel</button>`);
+  sh.querySelector('#vs').onclick=()=>{
+    sh.querySelectorAll('input[data-k]').forEach(i=>{v[i.dataset.k]=i.value.trim()});
+    save();closeSheet();draw();toast('Vessel record saved')};
+  sh.querySelector('#vc').onclick=closeSheet}
+
+function docSheet(){
+  const sh=openSheet(`<h2>Add a document</h2>
+    <p class="sub">Label it, then photograph the paper or plate.</p>
+    <div class="f"><label>Label</label><input type="text" id="dl" placeholder="e.g. Registration card, Port engine plate"></div>
+    <div class="segs" id="dq"></div>
+    <button class="btn teal" id="dgo" style="margin-top:14px">${'Take / choose photo'}</button>
+    <button class="btn ghost" id="dc" style="margin-top:8px">Cancel</button>`);
+  ['Registration','Insurance card','Engine plate','Survey','Receipt','Warranty'].forEach(q=>{
+    const b=document.createElement('button');b.textContent=q;
+    b.onclick=()=>{sh.querySelector('#dl').value=q;
+      sh.querySelectorAll('#dq button').forEach(x=>x.classList.toggle('on',x===b))};
+    sh.querySelector('#dq').appendChild(b)});
+  sh.querySelector('#dgo').onclick=()=>{
+    const label=sh.querySelector('#dl').value.trim()||'Document';
+    pickPhoto(id=>{S.vessel.docs.push({id:uid(),label,ph:id,ts:Date.now()});
+      logIt(`Document added — ${label}`);
+      save();closeSheet();draw();toast('Filed on the boat’s tag')})};
+  sh.querySelector('#dc').onclick=closeSheet}
+
+function itemSheet(seed){
+  const isEdit=seed&&seed.id;const i=isEdit?seed:{name:seed?.name||'',cat:seed?.cat||'Oil & Fluids',part:'',note:'',qty:0,par:0};
+  const cats=['Oil & Fluids','Filters','Belts & Impellers','Zincs & Hardware','Cleaning & Finish','Safety','Other'];
+  const sh=openSheet(`<h2>${isEdit?'Edit item':'Add supply item'}</h2>
+    <p class="sub">Your proven pick — brand, spec, part number — plus how many to keep aboard.</p>
+    <div class="f"><label>Item</label><input type="text" id="in" value="${esc(i.name)}" placeholder="e.g. Rotella T6 15W-40"></div>
+    <div class="f"><label>Category</label><div class="segs" id="ic"></div></div>
+    <div class="f"><label>Part # / spec (optional)</label><input type="text" id="ip" value="${esc(i.part||'')}" placeholder="e.g. Racor S3213 · 2 gal jug"></div>
+    <div class="f"><label>Note (optional)</label><input type="text" id="io" value="${esc(i.note||'')}" placeholder="e.g. West Marine carries it; fits both engines"></div>
+    <div class="f" style="display:flex;gap:12px">
+      <div style="flex:1"><label>On board now</label><input type="number" id="iq" inputmode="numeric" value="${i.qty||0}" min="0"></div>
+      <div style="flex:1"><label>Par level (keep at)</label><input type="number" id="ir" inputmode="numeric" value="${i.par||0}" min="0"></div></div>
+    <button class="btn teal" id="is">Save</button>
+    ${isEdit?`<button class="btn ghost" id="idel" style="margin-top:8px;color:var(--red)">Delete item</button>`:''}
+    <button class="btn ghost" id="ix" style="margin-top:8px">Cancel</button>`);
+  let cat=i.cat;
+  cats.forEach(c0=>{const b=document.createElement('button');b.textContent=c0;
+    if(c0===cat)b.className='on';
+    b.onclick=()=>{cat=c0;sh.querySelectorAll('#ic button').forEach(x=>x.classList.toggle('on',x.textContent===c0))};
+    sh.querySelector('#ic').appendChild(b)});
+  sh.querySelector('#is').onclick=()=>{
+    const name=sh.querySelector('#in').value.trim();
+    if(!name){toast('Name the item');return}
+    const upd={name,cat,part:sh.querySelector('#ip').value.trim(),note:sh.querySelector('#io').value.trim(),
+      qty:Math.max(0,+sh.querySelector('#iq').value||0),par:Math.max(0,+sh.querySelector('#ir').value||0)};
+    if(isEdit)Object.assign(i,upd);
+    else S.items.push({id:uid(),...upd});
+    save();closeSheet();draw();toast(isEdit?'Item updated':'Added to supplies')};
+  if(isEdit)sh.querySelector('#idel').onclick=()=>{
+    S.items.splice(S.items.indexOf(i),1);save();closeSheet();draw();toast('Item deleted')};
+  sh.querySelector('#ix').onclick=closeSheet}
 
 /* ---------- setup ---------- */
 function setupSheet(first){
-  const ov=$('#ov'),sh=$('#sheet');ov.classList.add('show');
-  const c=S.cfg||{name:'',engines:1,engType:'inboard',fuel:'diesel',gen:false,ac:false,trailer:false,salt:true};
-  function seg(opts,val,cb){const d=document.createElement('div');d.className='segs';
-    opts.forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;
-      if(v===val)b.className='on';
-      b.onclick=()=>{cb(v);render();};d.appendChild(b);});return d;}
+  const c=S.cfg?{...S.cfg}:{name:'',engines:1,engType:'inboard',fuel:'diesel',gen:false,ac:false,trailer:false,salt:true};
   function render(){
-    sh.innerHTML=`<h2>${first?'Set up your boat':'Boat setup'}</h2>
-      <p class="sub">30 seconds — this shapes every checklist and service clock.</p>`;
-    const f1=document.createElement('div');f1.className='f';
-    f1.innerHTML=`<label>Boat name</label><input type="text" id="bn" placeholder="e.g. Reel Therapy" value="${c.name}">`;
-    sh.appendChild(f1);
-    const mk=(lab,el)=>{const f=document.createElement('div');f.className='f';
-      f.innerHTML=`<label>${lab}</label>`;f.appendChild(el);sh.appendChild(f);};
-    mk('Engines',seg([[1,'Single'],[2,'Twin']],c.engines,v=>c.engines=v));
-    mk('Engine type',seg([['inboard','Inboard / sterndrive'],['outboard','Outboard']],c.engType,v=>c.engType=v));
-    mk('Fuel',seg([['diesel','Diesel'],['gas','Gas']],c.fuel,v=>c.fuel=v));
-    mk('Generator aboard?',seg([[true,'Yes'],[false,'No']],c.gen,v=>c.gen=v));
-    mk('Air conditioning?',seg([[true,'Yes'],[false,'No']],c.ac,v=>c.ac=v));
-    mk('Trailered?',seg([[true,'Yes'],[false,'No']],c.trailer,v=>c.trailer=v));
-    mk('Water',seg([[true,'Salt / brackish'],[false,'Fresh']],c.salt,v=>c.salt=v));
-    const go=document.createElement('button');go.className='btn teal';
-    go.textContent=first?'Start the log →':'Save';
-    go.onclick=()=>{c.name=$('#bn').value.trim()||'My Boat';S.cfg=c;save();
-      ov.classList.remove('show');draw();};
-    sh.appendChild(go);
-    if(!first){const x=document.createElement('button');x.className='btn ghost';x.style.cssText='width:100%;margin-top:8px';
-      x.textContent='Cancel';x.onclick=()=>ov.classList.remove('show');sh.appendChild(x);}
-  }
-  render();
-}
+    const sh=openSheet(`<h2>${first?'Set up your boat':'Boat setup'}</h2>
+      <p class="sub">30 seconds — this shapes every checklist and service clock.</p>
+      <div class="f"><label>Boat name</label><input type="text" id="bn" placeholder="e.g. Reel Therapy" value="${esc(c.name)}"></div>
+      <div id="segsbox"></div>
+      <button class="btn teal" id="go">${first?'Start the log →':'Save'}</button>
+      ${first?'':'<button class="btn ghost" id="cx" style="margin-top:8px">Cancel</button>'}`);
+    const seg=(lab,opts,val,cb)=>{const f=document.createElement('div');f.className='f';
+      f.innerHTML=`<label>${lab}</label>`;
+      const d=document.createElement('div');d.className='segs';
+      opts.forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;
+        if(v===val)b.className='on';
+        b.onclick=()=>{cb(v);render()};d.appendChild(b)});
+      f.appendChild(d);sh.querySelector('#segsbox').appendChild(f)};
+    seg('Engines',[[1,'Single'],[2,'Twin']],c.engines,v=>c.engines=v);
+    seg('Engine type',[['inboard','Inboard / sterndrive'],['outboard','Outboard']],c.engType,v=>c.engType=v);
+    seg('Fuel',[['diesel','Diesel'],['gas','Gas']],c.fuel,v=>c.fuel=v);
+    seg('Generator aboard?',[[true,'Yes'],[false,'No']],c.gen,v=>c.gen=v);
+    seg('Air conditioning?',[[true,'Yes'],[false,'No']],c.ac,v=>c.ac=v);
+    seg('Trailered?',[[true,'Yes'],[false,'No']],c.trailer,v=>c.trailer=v);
+    seg('Water',[[true,'Salt / brackish'],[false,'Fresh']],c.salt,v=>c.salt=v);
+    sh.querySelector('#bn').oninput=e=>c.name=e.target.value;
+    sh.querySelector('#go').onclick=()=>{c.name=(c.name||'').trim()||'My Boat';S.cfg=c;save();
+      closeSheet();draw()};
+    const cx=sh.querySelector('#cx');if(cx)cx.onclick=closeSheet}
+  render()}
 $('#gearBtn').onclick=()=>setupSheet(false);
 
 /* ---------- draw ---------- */
-function draw(){ header();nav();
+function draw(){header();nav();
   const m=$('#main');m.innerHTML='';
-  if(!S.cfg){setupSheet(true);return;}
-  ({today:vToday,hours:vHours,sched:vSched,log:vLog}[S.view]||vToday)(m);
-}
+  if(!S.cfg){setupSheet(true);return}
+  ({today:vToday,hours:vHours,sched:vSched,boat:vBoat,log:vLog}[S.view]||vToday)(m);
+  hydrate(m)}
 draw();
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
 </script>
 </body>
 </html>
